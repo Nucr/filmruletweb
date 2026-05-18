@@ -138,6 +138,39 @@
             <option value="1990s" data-i18n="era1990s">90'lar (Klasik)</option>
             <option value="1980s" data-i18n="era1980s">80'ler (Retro)</option>
             <option value="oldies" data-i18n="eraOldies">Eskiler</option>
+            <option value="custom" data-i18n="eraCustom">Özel Aralık...</option>
+          </select>
+        </div>
+
+        <!-- Özel Yıl Aralığı Filtresi -->
+        <div class="filter-group" id="customEraGroup" style="display: none;">
+          <label class="filter-label" data-i18n="customYearLabel">Özel Yıl Aralığı</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="number" id="minYearInput" placeholder="2010" min="1900" max="2029" class="modern-input">
+            <input type="number" id="maxYearInput" placeholder="2020" min="1900" max="2029" class="modern-input">
+          </div>
+        </div>
+
+        <!-- Oyuncu Filtresi -->
+        <div class="filter-group">
+          <label class="filter-label" data-i18n="actorLabel">Oyuncu (Aktör)</label>
+          <input type="text" id="actorInput" placeholder="Cillian Murphy" class="modern-input">
+        </div>
+
+        <!-- Orijinal Dil Filtresi -->
+        <div class="filter-group">
+          <label class="filter-label" data-i18n="languageLabel">Film Ana Dili</label>
+          <select id="languageSelect" class="modern-select">
+            <option value="all" data-i18n="langAll">Farketmez</option>
+            <option value="en">🇬🇧 İngilizce (English)</option>
+            <option value="tr">🇹🇷 Türkçe (Turkish)</option>
+            <option value="es">🇪🇸 İspanyolca (Spanish)</option>
+            <option value="ru">🇷🇺 Rusça (Russian)</option>
+            <option value="fr">🇫🇷 Fransızca (French)</option>
+            <option value="de">🇩🇪 Almanca (German)</option>
+            <option value="it">🇮🇹 İtalyanca (Italian)</option>
+            <option value="ja">🇯🇵 Japonca (Japanese)</option>
+            <option value="ko">🇰🇷 Korece (Korean)</option>
           </select>
         </div>
         <div class="category-list">
@@ -335,7 +368,7 @@
 
   <script type="module">
     import { logOut, onUserChange, addFavorite, markAsWatched } from './js/firebase.js';
-    import { fetchRandomMovie } from './js/tmdb.js';
+    import { fetchRandomMovie, fetchActorId } from './js/tmdb.js';
     import { t, applyTranslations } from './js/i18n.js';
 
     // ─── Tema Toggle ───
@@ -621,6 +654,17 @@
       updateCategoryBadges();
     });
 
+    // Dönem değiştiğinde Özel Yıl Aralığını göster/gizle
+    const eraSelect = document.getElementById('eraSelect');
+    const customEraGroup = document.getElementById('customEraGroup');
+    eraSelect.addEventListener('change', () => {
+      if (eraSelect.value === 'custom') {
+        customEraGroup.style.display = 'block';
+      } else {
+        customEraGroup.style.display = 'none';
+      }
+    });
+
     // Rastgele film çek
     randomBtn.addEventListener('click', async () => {
       loadingDiv.style.display = 'block';
@@ -628,29 +672,55 @@
 
       // 1. Kategorileri Al
       let checked = document.querySelectorAll('.category-item input:checked');
-      // Eğer hiçbiri seçili değilse ve Mood seçiliyse, mood türlerini kullan (fallback)
-      if (checked.length === 0 && moodSelect.value !== 'any') {
-        // Checkboxes already updated by change listener, but strictly ensure validation
-      }
-
       const genres = Array.from(checked).map(cb => cb.value);
 
       // 2. Dönem Filtresini Al
       const eraKey = eraSelect.value;
-      const years = ERA_YEARS[eraKey];
+      let years = ERA_YEARS[eraKey];
+      if (eraKey === 'custom') {
+        const minYearVal = document.getElementById('minYearInput').value.trim();
+        const maxYearVal = document.getElementById('maxYearInput').value.trim();
+        const minYear = minYearVal ? parseInt(minYearVal) : 1900;
+        const maxYear = maxYearVal ? parseInt(maxYearVal) : new Date().getFullYear();
+        years = { gte: `${minYear}-01-01`, lte: `${maxYear}-12-31` };
+      }
+
+      // 3. Oyuncu Filtresini Al
+      const actorName = document.getElementById('actorInput').value.trim();
+      let actorId = null;
+      if (actorName) {
+        try {
+          actorId = await fetchActorId(actorName);
+          if (!actorId) {
+            alert(t('errActorNotFound') || 'Bu isimde bir oyuncu bulunamadı! 🎭');
+            loadingDiv.style.display = 'none';
+            return;
+          }
+        } catch (err) {
+          console.error(err);
+          alert(t('errActorNotFound') || 'Bu isimde bir oyuncu bulunamadı! 🎭');
+          loadingDiv.style.display = 'none';
+          return;
+        }
+      }
+
+      // 4. Orijinal Dil Filtresini Al
+      const originalLanguage = document.getElementById('languageSelect').value;
 
       try {
         let movie = null;
         let attempts = 0;
+        const minRating = parseFloat(ratingSlider.value);
+
         // Blacklist kontrolü (Max 5 deneme)
         while (attempts < 5) {
-          movie = await fetchRandomMovie(genres, 0, years);
+          movie = await fetchRandomMovie(genres, minRating, years, actorId, originalLanguage);
           if (!blacklist.has(movie.id)) break;
           movie = null;
           attempts++;
         }
 
-        if (!movie) throw new Error('Uygun film bulunamadı veya hepsi izlenmiş listende.');
+        if (!movie) throw new Error(t('errNoMoviesFound') || 'Uygun film bulunamadı veya hepsi izlenmiş listende.');
 
         currentMovie = movie;
         addToHistory(movie);

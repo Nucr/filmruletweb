@@ -64,6 +64,14 @@ const translations = {
 
         // Hatalar
         errSelectCategory: 'En az bir kategori seç kral!',
+        errSelectCategoryOrActor: 'Lütfen en az bir kategori seçin veya bir oyuncu adı girin!',
+        errNoMoviesFound: 'Bu kriterlerde film bulunamadı.',
+        errActorNotFound: 'Bu isimde bir oyuncu bulunamadı! 🎭',
+        customYearLabel: 'Özel Yıl Aralığı',
+        actorLabel: 'Oyuncu (Aktör)',
+        languageLabel: 'Film Ana Dili',
+        langAll: 'Farketmez',
+        eraCustom: 'Özel Aralık...',
 
         // Mood (Ruh Hali)
         moodLabel: 'Ruh Hali (Mood)',
@@ -250,6 +258,14 @@ const translations = {
         btnSeen: 'Seen it',
 
         errSelectCategory: 'Select at least one category!',
+        errSelectCategoryOrActor: 'Please select at least one category or enter an actor name!',
+        errNoMoviesFound: 'No movies found with these criteria.',
+        errActorNotFound: 'No actor found with this name! 🎭',
+        customYearLabel: 'Custom Year Range',
+        actorLabel: 'Actor (Cast)',
+        languageLabel: 'Original Language',
+        langAll: 'Any',
+        eraCustom: 'Custom Range...',
 
         // Login Page
         loginTitle: 'FilmRoulette — Log In',
@@ -408,6 +424,14 @@ const translations = {
         btnSeen: 'Visto',
 
         errSelectCategory: '¡Selecciona al menos una categoría!',
+        errSelectCategoryOrActor: '¡Por favor, selecciona al menos una categoría o introduce un nombre de actor!',
+        errNoMoviesFound: 'No se encontraron películas con estos criterios.',
+        errActorNotFound: '¡No se encontró ningún actor con este nombre! 🎭',
+        customYearLabel: 'Rango de Años Personalizado',
+        actorLabel: 'Actor (Reparto)',
+        languageLabel: 'Idioma Original',
+        langAll: 'Cualquiera',
+        eraCustom: 'Rango Personalizado...',
 
         // Login Page
         loginTitle: 'FilmRoulette — Iniciar Sesión',
@@ -566,6 +590,14 @@ const translations = {
         btnSeen: 'Просмотрено',
 
         errSelectCategory: 'Выберите хотя бы одну категорию!',
+        errSelectCategoryOrActor: 'Пожалуйста, выберите хотя бы одну категорию или введите имя актера!',
+        errNoMoviesFound: 'Фильмы по этим критериям не найдены.',
+        errActorNotFound: 'Актер с таким именем не найден! 🎭',
+        customYearLabel: 'Свой диапазон лет',
+        actorLabel: 'Актер (В ролях)',
+        languageLabel: 'Оригинальный язык',
+        langAll: 'Любой',
+        eraCustom: 'Свой диапазон...',
 
         // Login Page
         loginTitle: 'FilmRoulette — Вход',

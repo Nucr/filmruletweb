@@ -29,39 +29,68 @@ export function getCountry() {
 
 import { t } from './i18n.js';
 
-export async function fetchRandomMovie(genres = [], minRating = 0, years = null) {
-  if (genres.length === 0) {
-    throw new Error(t('errSelectCategory'));
+export async function fetchActorId(actorName) {
+  if (!actorName || !actorName.trim()) return null;
+  const language = getLanguage();
+  const searchUrl = `${TMDB_BASE_URL}/search/person?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(actorName.trim())}&language=${language}`;
+  try {
+    const response = await fetch(searchUrl);
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data.results && data.results.length > 0) {
+      return data.results[0].id;
+    }
+    return null;
+  } catch (err) {
+    console.error('Actor search error:', err);
+    return null;
+  }
+}
+
+function buildDiscoverParams(genres, minRating, years, actorId, originalLanguage) {
+  let query = `&sort_by=popularity.desc&include_adult=false&vote_count.gte=100&vote_average.gte=${minRating}`;
+  if (genres && genres.length > 0) {
+    query += `&with_genres=${genres.join(',')}`;
+  }
+  if (years) {
+    if (years.gte) query += `&primary_release_date.gte=${years.gte}`;
+    if (years.lte) query += `&primary_release_date.lte=${years.lte}`;
+  }
+  if (actorId) {
+    query += `&with_cast=${actorId}`;
+  }
+  if (originalLanguage && originalLanguage !== 'all') {
+    query += `&with_original_language=${originalLanguage}`;
+  }
+  return query;
+}
+
+export async function fetchRandomMovie(genres = [], minRating = 0, years = null, actorId = null, originalLanguage = null) {
+  if (genres.length === 0 && !actorId) {
+    throw new Error(t('errSelectCategoryOrActor'));
   }
 
   const language = getLanguage();
   const country = getCountry();
-  const genreString = genres.join(',');
-
-  // Dönem (Yıl) Filtresi
-  let dateQuery = '';
-  if (years) {
-    if (years.gte) dateQuery += `&primary_release_date.gte=${years.gte}`;
-    if (years.lte) dateQuery += `&primary_release_date.lte=${years.lte}`;
-  }
+  const filterParams = buildDiscoverParams(genres, minRating, years, actorId, originalLanguage);
 
   try {
     // 1. ADIM: Bu kategorilerde kaç sayfa film var öğrenelim
-    const discoverUrl = `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&with_genres=${genreString}&sort_by=popularity.desc&include_adult=false&vote_count.gte=100&vote_average.gte=${minRating}&page=1&language=${language}${dateQuery}`;
+    const discoverUrl = `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&page=1&language=${language}${filterParams}`;
 
     let response = await fetch(discoverUrl);
 
     if (!response.ok) throw new Error(`TMDB API hatası: ${response.status}`);
     let data = await response.json();
 
-    if (!data.total_pages) throw new Error('Bu kriterlerde film bulunamadı');
+    if (!data.total_pages) throw new Error(t('errNoMoviesFound') || 'Bu kriterlerde film bulunamadı');
 
     const maxPages = data.total_pages > 500 ? 500 : data.total_pages;
     const randomPage = Math.floor(Math.random() * maxPages) + 1;
 
     // 2. ADIM: O sayfadaki filmleri çekelim
     response = await fetch(
-      `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&with_genres=${genreString}&sort_by=popularity.desc&include_adult=false&vote_count.gte=100&vote_average.gte=${minRating}&page=${randomPage}&language=${language}${dateQuery}`
+      `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&page=${randomPage}&language=${language}${filterParams}`
     );
     data = await response.json();
 
