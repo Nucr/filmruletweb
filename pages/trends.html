@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO -->
+    <title>Trendler — FilmRoulette</title>
+    <meta name="description" content="Haftanın en popüler ve trend olan filmlerini keşfedin.">
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="../index.html" class="nav-logo">🎬 FilmRoulette</a>
+        <div class="nav-links">
+            <a href="../index.html" class="nav-link" data-i18n="navHome">Ana Sayfa</a>
+            <a href="favorites.html" class="nav-link" data-i18n="navFavorites">Favoriler</a>
+            <a href="trends.html" class="nav-link active" data-i18n="navTrends">Trendler</a>
+        </div>
+        <div class="nav-right">
+            <select class="lang-select" id="langSelect" title="Dil Seçimi">
+                <option value="tr">🇹🇷 TR</option>
+                <option value="en">🇬🇧 EN</option>
+                <option value="es">🇪🇸 ES</option>
+                <option value="ru">🇷🇺 RU</option>
+            </select>
+            <button class="theme-toggle" id="themeToggle" title="Tema Değiştir">🌙</button>
+            <div class="nav-profile" id="navProfile">
+                <img id="profilePhoto" class="profile-photo" src="" alt="Profil">
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="dropdown-header">
+                        <img id="dropdownPhoto" class="dropdown-photo" src="" alt="">
+                        <div>
+                            <p id="dropdownName" class="dropdown-name"></p>
+                            <p id="dropdownEmail" class="dropdown-email"></p>
+                        </div>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a href="profile.html" class="dropdown-item" id="profileBtn" data-i18n="navProfile">👤 Profilim</a>
+                    <a href="favorites.html" class="dropdown-item" data-i18n="navMyFavorites">❤️ Favorilerim</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item logout" id="logoutBtn" data-i18n="navLogout">🚪 Çıkış Yap</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- İçerik -->
+    <div id="mainContent" class="container" style="display:none;">
+        <div class="page-header">
+            <h1>🔥 Haftanın Trendleri</h1>
+            <p class="page-desc">Tüm dünyada bu hafta en çok konuşulan ve izlenen popüler filmler.</p>
+        </div>
+
+        <div id="trendsContainer">
+            <!-- Filmler buraya yüklenecek -->
+            <p style="color:var(--text-muted); text-align:center;">Filmler yükleniyor...</p>
+        </div>
+    </div>
+
+    <!-- Film Detay Modal -->
+    <div id="movieModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" id="modalClose">&times;</span>
+            <div class="modal-body">
+                <div class="modal-header">
+                    <img id="modalPoster" src="" alt="Poster">
+                    <div class="modal-info">
+                        <h2 id="modalTitle"></h2>
+                        <div class="modal-meta">
+                            <span id="modalYear" class="tag"></span>
+                            <span id="modalRuntime" class="tag"></span>
+                            <span id="modalRating" class="tag">⭐ <span></span></span>
+                        </div>
+                        <p id="modalOverview"></p>
+                        <div class="modal-genres" id="modalGenres"></div>
+                    </div>
+                </div>
+
+                <div class="modal-section">
+                    <h3>Oyuncular</h3>
+                    <div id="modalCast" class="cast-list"></div>
+                </div>
+
+                <div class="modal-section" id="modalWatchSection" style="display:none;">
+                    <h3>📺 İzleme Platformları</h3>
+                    <div id="modalWatchProviders" class="watch-providers"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { logOut, onUserChange } from '../js/firebase.js';
+        import { t, applyTranslations } from '../js/i18n.js';
+
+        const TMDB_API_KEY = '4e3a069664d69bf8ca8a2fbc1ba52568';
+        const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+
+        // ─── Tema Toggle ───
+        const themeToggle = document.getElementById('themeToggle');
+        const savedTheme = localStorage.getItem('filmroulette-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        themeToggle.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+
+        themeToggle.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('filmroulette-theme', next);
+            themeToggle.textContent = next === 'dark' ? '🌙' : '☀️';
+        });
+
+        // ─── Dil Seçici ───
+        const langSelect = document.getElementById('langSelect');
+        const savedLang = localStorage.getItem('filmroulette-lang') || 'tr';
+        langSelect.value = savedLang;
+        applyTranslations();
+
+        langSelect.addEventListener('change', () => {
+            localStorage.setItem('filmroulette-lang', langSelect.value);
+            applyTranslations();
+            loadTrends(); // Dili değiştirince yeniden yükle
+        });
+
+        // ─── DOM ───
+        const mainContent = document.getElementById('mainContent');
+        const trendsContainer = document.getElementById('trendsContainer');
+        const profilePhoto = document.getElementById('profilePhoto');
+        const dropdownPhoto = document.getElementById('dropdownPhoto');
+        const dropdownName = document.getElementById('dropdownName');
+        const dropdownEmail = document.getElementById('dropdownEmail');
+        const navProfile = document.getElementById('navProfile');
+        const profileDropdown = document.getElementById('profileDropdown');
+        const movieModal = document.getElementById('movieModal');
+        const modalClose = document.getElementById('modalClose');
+
+        const defaultAvatar = 'https://ui-avatars.com/api/?background=e50914&color=fff&bold=true&size=128&name=';
+
+        let currentUser = null;
+
+        // Profil dropdown
+        navProfile.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('show');
+        });
+        document.addEventListener('click', () => {
+            profileDropdown.classList.remove('show');
+        });
+
+        // Modal
+        modalClose.addEventListener('click', () => {
+            movieModal.style.display = 'none';
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === movieModal) movieModal.style.display = 'none';
+        });
+
+        // Kullanıcı durumu
+        onUserChange(async (user) => {
+            currentUser = user;
+            if (user) {
+                mainContent.style.display = 'block';
+                const displayName = user.displayName || user.email.split('@')[0];
+                const photoURL = user.photoURL || defaultAvatar + encodeURIComponent(displayName);
+                profilePhoto.src = photoURL;
+                dropdownPhoto.src = photoURL;
+                dropdownName.textContent = displayName;
+                dropdownEmail.textContent = user.email;
+                await loadTrends();
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Çıkış
+        document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await logOut();
+            window.location.href = 'login.html';
+        });
+
+        // Trendleri Yükle
+        async function loadTrends() {
+            trendsContainer.innerHTML = `<p style="color:var(--text-muted); text-align:center;">Yükleniyor...</p>`;
+            try {
+                const lang = localStorage.getItem('filmroulette-lang') || 'tr';
+                const langMap = { 'tr': 'tr-TR', 'en': 'en-US', 'es': 'es-ES', 'ru': 'ru-RU' };
+                const response = await fetch(
+                    `${TMDB_BASE_URL}/trending/movie/week?api_key=${TMDB_API_KEY}&language=${langMap[lang] || 'tr-TR'}`
+                );
+                const data = await response.json();
+                
+                if (data.results && data.results.length > 0) {
+                    renderTrends(data.results);
+                } else {
+                    trendsContainer.innerHTML = `<p style="text-align:center;">Şu an için trend film bulunamadı.</p>`;
+                }
+            } catch (err) {
+                console.error("Trend filmleri çekerken hata:", err);
+                trendsContainer.innerHTML = `<p style="color:red; text-align:center;">Filmler yüklenirken hata oluştu.</p>`;
+            }
+        }
+
+        // Trend Filmleri Ekrana Çiz
+        function renderTrends(movies) {
+            trendsContainer.innerHTML = '';
+            const grid = document.createElement('div');
+            grid.className = 'favorites-grid'; // Aynı css classı kullanalım
+
+            movies.forEach((movie, index) => {
+                const card = document.createElement('div');
+                card.className = 'fav-card';
+                // Trend sırasını göstermek için bir badge
+                const rankBadge = `<div style="position:absolute; top:10px; left:10px; background:var(--accent); color:white; padding:5px 10px; border-radius:50%; font-weight:bold; z-index:2;">#${index+1}</div>`;
+                card.innerHTML = `
+                  ${rankBadge}
+                  <img src="${movie.poster_path ? 'https://image.tmdb.org/t/p/w500' + movie.poster_path : 'https://via.placeholder.com/300x450?text=No+Poster'}" alt="${movie.title}">
+                  <div class="fav-card-info">
+                    <p class="fav-card-title">${movie.title}</p>
+                    <p class="fav-card-rating">⭐ ${movie.vote_average?.toFixed(1) || 'N/A'}</p>
+                  </div>
+                `;
+
+                card.addEventListener('click', () => openMovieModal(movie));
+                grid.appendChild(card);
+            });
+
+            trendsContainer.appendChild(grid);
+        }
+
+        // Film detay modal aç
+        async function openMovieModal(movie) {
+            movieModal.style.display = 'flex';
+
+            // TMDB'den güncel detayları çek
+            try {
+                const lang = localStorage.getItem('filmroulette-lang') || 'tr';
+                const langMap = { 'tr': 'tr-TR', 'en': 'en-US', 'es': 'es-ES', 'ru': 'ru-RU' };
+                const response = await fetch(
+                    `${TMDB_BASE_URL}/movie/${movie.id}?api_key=${TMDB_API_KEY}&language=${langMap[lang] || 'tr-TR'}&append_to_response=credits,watch/providers`
+                );
+                const details = await response.json();
+
+                document.getElementById('modalTitle').textContent = details.title;
+                document.getElementById('modalYear').textContent = details.release_date ? details.release_date.split('-')[0] : 'N/A';
+                document.getElementById('modalRuntime').textContent = details.runtime ? `${Math.floor(details.runtime / 60)}h ${details.runtime % 60}m` : 'N/A';
+                document.getElementById('modalRating').querySelector('span').textContent = details.vote_average.toFixed(1);
+                document.getElementById('modalOverview').textContent = details.overview || t('noDesc');
+                document.getElementById('modalPoster').src = details.poster_path ? `https://image.tmdb.org/t/p/w500${details.poster_path}` : 'https://via.placeholder.com/300x450';
+
+                // Türler
+                const genresDiv = document.getElementById('modalGenres');
+                genresDiv.innerHTML = '';
+                if (details.genres) {
+                    details.genres.forEach(genre => {
+                        const badge = document.createElement('span');
+                        badge.className = 'genre-badge';
+                        badge.textContent = genre.name;
+                        genresDiv.appendChild(badge);
+                    });
+                }
+
+                // Oyuncular
+                const castDiv = document.getElementById('modalCast');
+                castDiv.innerHTML = '';
+                if (details.credits && details.credits.cast) {
+                    details.credits.cast.slice(0, 8).forEach(actor => {
+                        const span = document.createElement('span');
+                        span.className = 'cast-tag';
+                        span.textContent = actor.name;
+                        castDiv.appendChild(span);
+                    });
+                }
+
+                // İzleme platformları
+                const watchSection = document.getElementById('modalWatchSection');
+                const watchProviders = document.getElementById('modalWatchProviders');
+                watchProviders.innerHTML = '';
+
+                if (details['watch/providers'] && details['watch/providers'].results) {
+                    const countryMap = { 'tr': 'TR', 'en': 'US', 'es': 'ES', 'ru': 'RU' };
+                    const country = countryMap[lang] || 'TR';
+                    const providers = details['watch/providers'].results[country];
+
+                    if (providers && (providers.flatrate || providers.rent || providers.buy)) {
+                        watchSection.style.display = 'block';
+                        const allProviders = [
+                            ...(providers.flatrate || []),
+                            ...(providers.rent || []),
+                            ...(providers.buy || [])
+                        ];
+
+                        const seen = new Set();
+                        allProviders.forEach(provider => {
+                            if (!seen.has(provider.provider_id)) {
+                                seen.add(provider.provider_id);
+                                const badge = document.createElement('div');
+                                badge.className = 'provider-badge';
+                                badge.innerHTML = `
+                  <img src="https://image.tmdb.org/t/p/w92${provider.logo_path}" alt="${provider.provider_name}">
+                  <span>${provider.provider_name}</span>
+                `;
+                                watchProviders.appendChild(badge);
+                            }
+                        });
+                    } else {
+                        watchSection.style.display = 'none';
+                    }
+                } else {
+                    watchSection.style.display = 'none';
+                }
+
+            } catch (err) {
+                console.error('TMDB fetch error:', err);
+            }
+        }
+    </script>
+</body>
+
+</html>

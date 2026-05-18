@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Profilim ve Film Ağım — FilmRoulette</title>
+    <meta name="description" content="Kişisel film istatistikleriniz ve interaktif film ağınız.">
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Vis.js Network için -->
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+    <style>
+        .profile-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .profile-sidebar {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--bg-input-border);
+            text-align: center;
+        }
+
+        .profile-sidebar img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 4px solid var(--accent);
+            margin-bottom: 20px;
+            object-fit: cover;
+        }
+
+        .profile-sidebar h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .profile-sidebar p {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: var(--bg-input);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            text-align: left;
+            border: 1px solid var(--bg-input-border);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        .network-container {
+            background: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--bg-input-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            height: calc(100vh - 120px);
+        }
+
+        .network-header {
+            padding: 20px 30px;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid var(--bg-input-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .network-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #movieNetwork {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #111; /* Koyu arka plan ağ için daha iyi */
+        }
+        
+        /* Tema açıkken ağı da açık yapalım */
+        [data-theme="light"] #movieNetwork {
+            background-color: #f5f7fa;
+        }
+
+        .loading-network {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            pointer-events: none;
+        }
+
+        @media (max-width: 900px) {
+            .profile-container {
+                grid-template-columns: 1fr;
+            }
+            .network-container {
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="../index.html" class="nav-logo">🎬 FilmRoulette</a>
+        <div class="nav-links">
+            <a href="../index.html" class="nav-link" data-i18n="navHome">Ana Sayfa</a>
+            <a href="favorites.html" class="nav-link" data-i18n="navFavorites">Favoriler</a>
+            <a href="trends.html" class="nav-link" data-i18n="navTrends">Trendler</a>
+        </div>
+        <div class="nav-right">
+            <select class="lang-select" id="langSelect" title="Dil Seçimi">
+                <option value="tr">🇹🇷 TR</option>
+                <option value="en">🇬🇧 EN</option>
+                <option value="es">🇪🇸 ES</option>
+                <option value="ru">🇷🇺 RU</option>
+            </select>
+            <button class="theme-toggle" id="themeToggle" title="Tema Değiştir">🌙</button>
+            <div class="nav-profile" id="navProfile">
+                <img id="profilePhoto" class="profile-photo" src="" alt="Profil">
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="dropdown-header">
+                        <img id="dropdownPhoto" class="dropdown-photo" src="" alt="">
+                        <div>
+                            <p id="dropdownName" class="dropdown-name"></p>
+                            <p id="dropdownEmail" class="dropdown-email"></p>
+                        </div>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a href="profile.html" class="dropdown-item active" id="profileBtn" data-i18n="navProfile">👤 Profilim</a>
+                    <a href="favorites.html" class="dropdown-item" data-i18n="navMyFavorites">❤️ Favorilerim</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item logout" id="logoutBtn" data-i18n="navLogout">🚪 Çıkış Yap</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- İçerik -->
+    <div id="mainContent" class="container" style="display:none;">
+        <div class="page-header">
+            <h1>👤 Profilim</h1>
+            <p class="page-desc">İzlediğin filmler, istatistiklerin ve kişisel film ağın.</p>
+        </div>
+
+        <div class="profile-container">
+            <!-- Sol Panel: İstatistikler -->
+            <div class="profile-sidebar">
+                <img id="mainProfilePhoto" src="" alt="Profil">
+                <h2 id="mainProfileName">Kullanıcı</h2>
+                <p id="mainProfileEmail">email@adres.com</p>
+
+                <div class="stat-box">
+                    <span class="stat-label">Toplam İzlenen Film</span>
+                    <span class="stat-value" id="statTotalMovies">0</span>
+                </div>
+                
+                <div class="stat-box">
+                    <span class="stat-label">Toplam İzleme Süresi</span>
+                    <span class="stat-value" id="statTotalHours">0 Saat</span>
+                </div>
+
+                <div class="stat-box">
+                    <span class="stat-label">En Çok İzlenen Tür</span>
+                    <span class="stat-value" id="statTopGenre">-</span>
+                </div>
+
+                <div class="stat-box">
+                    <span class="stat-label">Son İzlenen</span>
+                    <span class="stat-value" id="statLastWatched" style="font-size:1rem;">-</span>
+                </div>
+            </div>
+
+            <!-- Sağ Panel: Ağaç Grafiği -->
+            <div class="network-container">
+                <div class="network-header">
+                    <h3>🕸️ Benim Film Ağım (MovieMap)</h3>
+                    <button class="btn-primary" style="padding: 5px 15px; font-size: 0.9rem;" onclick="network.fit()">Ortala</button>
+                </div>
+                <div style="position: relative; flex:1;">
+                    <div id="loadingNetwork" class="loading-network">Ağ Yaratılıyor...</div>
+                    <div id="movieNetwork"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Film Özeti Tooltip'i için gizli div (opsiyonel) -->
+    <div id="nodeTooltip" style="display:none; position:absolute; background:var(--bg-card); border:1px solid var(--accent); padding:10px; border-radius:8px; z-index:100; pointer-events:none; box-shadow: 0 5px 15px rgba(0,0,0,0.5);"></div>
+
+    <script type="module">
+        import { logOut, onUserChange, getWatchedMovies } from '../js/firebase.js';
+        import { t, applyTranslations } from '../js/i18n.js';
+
+        let network = null;
+
+        // ─── Tema Toggle ───
+        const themeToggle = document.getElementById('themeToggle');
+        const savedTheme = localStorage.getItem('filmroulette-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        themeToggle.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+
+        themeToggle.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('filmroulette-theme', next);
+            themeToggle.textContent = next === 'dark' ? '🌙' : '☀️';
+            
+            // Ağı yeniden çiz ki renkler düzelsin
+            if (network) {
+                network.setOptions({
+                    nodes: { font: { color: next === 'dark' ? '#ffffff' : '#000000' } },
+                    edges: { color: { color: next === 'dark' ? '#555' : '#ccc' } }
+                });
+            }
+        });
+
+        // ─── Dil Seçici ───
+        const langSelect = document.getElementById('langSelect');
+        const savedLang = localStorage.getItem('filmroulette-lang') || 'tr';
+        langSelect.value = savedLang;
+        applyTranslations();
+
+        langSelect.addEventListener('change', () => {
+            localStorage.setItem('filmroulette-lang', langSelect.value);
+            applyTranslations();
+        });
+
+        // ─── DOM ───
+        const mainContent = document.getElementById('mainContent');
+        const profilePhoto = document.getElementById('profilePhoto');
+        const dropdownPhoto = document.getElementById('dropdownPhoto');
+        const dropdownName = document.getElementById('dropdownName');
+        const dropdownEmail = document.getElementById('dropdownEmail');
+        const navProfile = document.getElementById('navProfile');
+        const profileDropdown = document.getElementById('profileDropdown');
+
+        const mainProfilePhoto = document.getElementById('mainProfilePhoto');
+        const mainProfileName = document.getElementById('mainProfileName');
+        const mainProfileEmail = document.getElementById('mainProfileEmail');
+
+        const defaultAvatar = 'https://ui-avatars.com/api/?background=e50914&color=fff&bold=true&size=128&name=';
+
+        let currentUser = null;
+
+        // Profil dropdown
+        navProfile.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('show');
+        });
+        document.addEventListener('click', () => {
+            profileDropdown.classList.remove('show');
+        });
+
+        // Çıkış
+        document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await logOut();
+            window.location.href = 'login.html';
+        });
+
+        // Kullanıcı durumu
+        onUserChange(async (user) => {
+            currentUser = user;
+            if (user) {
+                mainContent.style.display = 'block';
+                const displayName = user.displayName || user.email.split('@')[0];
+                const photoURL = user.photoURL || defaultAvatar + encodeURIComponent(displayName);
+                
+                profilePhoto.src = photoURL;
+                dropdownPhoto.src = photoURL;
+                dropdownName.textContent = displayName;
+                dropdownEmail.textContent = user.email;
+
+                mainProfilePhoto.src = photoURL;
+                mainProfileName.textContent = displayName;
+                mainProfileEmail.textContent = user.email;
+
+                await loadProfileData(user.uid, photoURL, displayName);
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Verileri Yükle ve Ağı Oluştur
+        async function loadProfileData(uid, userPhoto, userName) {
+            try {
+                const movies = await getWatchedMovies(uid);
+                
+                document.getElementById('loadingNetwork').style.display = 'none';
+
+                if (!movies || movies.length === 0) {
+                    document.getElementById('movieNetwork').innerHTML = `
+                        <div style="display:flex; height:100%; align-items:center; justify-content:center; color:var(--text-muted); flex-direction:column;">
+                            <div style="font-size:3rem; margin-bottom:10px;">🕸️</div>
+                            <p>Henüz ağını oluşturacak kadar film izlemedin.</p>
+                            <a href="../index.html" class="btn-primary" style="margin-top:15px; text-decoration:none;">Film Bulmaya Git</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 1. Sıralama: En eski izlenenler ilk sırada olacak (kronolojik)
+                movies.sort((a, b) => {
+                    const aSec = a.watchedAt?.seconds || 0;
+                    const bSec = b.watchedAt?.seconds || 0;
+                    return aSec - bSec;
+                });
+
+                // 2. İstatistikleri Hesapla
+                calculateStats(movies);
+
+                // 3. Ağı Oluştur
+                buildNetwork(movies, userPhoto, userName);
+
+            } catch (err) {
+                console.error("Profil verisi yüklenirken hata:", err);
+                document.getElementById('loadingNetwork').textContent = "Ağ yüklenirken hata oluştu.";
+            }
+        }
+
+        function calculateStats(movies) {
+            document.getElementById('statTotalMovies').textContent = movies.length;
+
+            let totalMinutes = 0;
+            const genreCounts = {};
+
+            movies.forEach(m => {
+                totalMinutes += (m.runtime || 0);
+                
+                if (m.genres) {
+                    m.genres.forEach(g => {
+                        genreCounts[g.name] = (genreCounts[g.name] || 0) + 1;
+                    });
+                }
+            });
+
+            document.getElementById('statTotalHours').textContent = `${Math.floor(totalMinutes / 60)}s ${totalMinutes % 60}d`;
+
+            if (Object.keys(genreCounts).length > 0) {
+                const topGenre = Object.keys(genreCounts).reduce((a, b) => genreCounts[a] > genreCounts[b] ? a : b);
+                document.getElementById('statTopGenre').textContent = topGenre;
+            }
+
+            const lastMovie = movies[movies.length - 1];
+            document.getElementById('statLastWatched').textContent = lastMovie.title;
+        }
+
+        function buildNetwork(movies, userPhoto, userName) {
+            const container = document.getElementById('movieNetwork');
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const fontColor = currentTheme === 'dark' ? '#ffffff' : '#000000';
+            const edgeColor = currentTheme === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)';
+
+            // Node'ları ve Edge'leri Vis.js formatında hazırla
+            const nodes = new vis.DataSet();
+            const edges = new vis.DataSet();
+
+            // Merkez Node: Kullanıcı
+            nodes.add({
+                id: 'user',
+                label: userName,
+                shape: 'circularImage',
+                image: userPhoto,
+                size: 40,
+                font: { color: fontColor, size: 16, bold: true },
+                borderWidth: 4,
+                color: { border: '#e50914' },
+                shadow: true
+            });
+
+            // Filmleri Node ve Edge olarak ekle
+            movies.forEach((movie, index) => {
+                // Node ekle
+                nodes.add({
+                    id: movie.id,
+                    label: movie.title,
+                    shape: 'circularImage',
+                    image: movie.poster || 'https://via.placeholder.com/150',
+                    size: 25 + (index * 0.5), // Yeni filmler biraz daha büyük
+                    font: { color: fontColor, size: 12, face: 'Inter' },
+                    borderWidth: 3,
+                    color: { 
+                        border: '#4285F4',
+                        background: '#111111',
+                        highlight: { border: '#e50914', background: '#111111' },
+                        hover: { border: '#e50914', background: '#111111' }
+                    },
+                    title: `${movie.title}\n⭐ ${movie.rating}` // Tooltip
+                });
+
+                // Kullanıcıya bağla (Uzaklık zamanla artar)
+                // ilk izlediği film ortada (kısa kenar), en son izlediği uzakta (uzun kenar)
+                edges.add({
+                    from: 'user',
+                    to: movie.id,
+                    length: 120 + (index * 40), // Yumuşak geçişli uzaklık
+                    color: { color: edgeColor, opacity: 0.3 }
+                });
+
+                // Bir önceki filme bağla (Zaman çizelgesi ağı - yumuşak kavisli mavi)
+                if (index > 0) {
+                    const prevMovie = movies[index - 1];
+                    edges.add({
+                        from: prevMovie.id,
+                        to: movie.id,
+                        length: 100,
+                        color: { color: 'rgba(66, 133, 244, 0.5)', opacity: 0.5 },
+                        dashes: true // Zaman bağı kesik çizgi olsun
+                    });
+                }
+
+                // Aynı türe sahip rastgele eski bir filme bağla (Gerçek "Örümcek Ağı" görünümü - soft yeşil)
+                if (index > 1 && movie.genres && movie.genres.length > 0) {
+                    const myGenres = movie.genres.map(g => g.id);
+                    // Kendinden öncekileri ters çevirip aynı türde olan ilkini bul
+                    for (let i = index - 2; i >= 0; i--) {
+                        const olderMovie = movies[i];
+                        if (olderMovie.genres) {
+                            const sharedGenre = olderMovie.genres.find(g => myGenres.includes(g.id));
+                            if (sharedGenre) {
+                                edges.add({
+                                    from: olderMovie.id,
+                                    to: movie.id,
+                                    length: 180,
+                                    color: { color: 'rgba(52, 168, 83, 0.4)', opacity: 0.4 }
+                                });
+                                break; // Sadece bir tane güçlü tür bağı yeter
+                            }
+                        }
+                    }
+                }
+            });
+
+            const data = {
+                nodes: nodes,
+                edges: edges
+            };
+
+            const options = {
+                physics: {
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: {
+                        gravitationalConstant: -120, // İtme kuvveti
+                        centralGravity: 0.005, // Merkeze çekimi çok yumuşak yaptık
+                        springLength: 160,
+                        springConstant: 0.015, // Çok esnek, jöle gibi sallanan yaylar (Soft & Dynamic)
+                        damping: 0.4, // Salınımın yumuşakça sönümlenmesi
+                        avoidOverlap: 1 // Düğümlerin üst üste binmesini tamamen engeller
+                    },
+                    stabilization: {
+                        iterations: 120,
+                        updateInterval: 25
+                    }
+                },
+                nodes: {
+                    borderWidth: 3,
+                    borderWidthSelected: 5,
+                    shadow: {
+                        enabled: true,
+                        color: 'rgba(0,0,0,0.5)',
+                        size: 10,
+                        x: 0,
+                        y: 6
+                    },
+                    shapeProperties: {
+                        useBorderWithImage: true
+                    }
+                },
+                edges: {
+                    width: 2,
+                    smooth: {
+                        type: 'continuous', // Kavisli yumuşak çizgiler (Soft Web)
+                        forceDirection: 'none',
+                        roundness: 0.5
+                    },
+                    shadow: {
+                        enabled: true,
+                        color: 'rgba(0,0,0,0.2)',
+                        size: 4,
+                        x: 0,
+                        y: 2
+                    }
+                },
+                interaction: {
+                    hover: true,
+                    tooltipDelay: 200,
+                    zoomView: true
+                }
+            };
+
+            // Global nesneye atayalım ki ortalama butonundan erişilebilsin
+            window.network = new vis.Network(container, data, options);
+
+            // Stabilizasyon bittiğinde ağı ekrana sığdır ve ortala
+            window.network.once("stabilizationIterationsDone", function () {
+                window.network.fit();
+            });
+        }
+    </script>
+</body>
+
+</html>

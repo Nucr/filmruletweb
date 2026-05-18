@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /pages/login.html
+Disallow: /pages/signup.html
+Disallow: /pages/favorites.html
+
+Sitemap: https://filmroulette.app/sitemap.xml

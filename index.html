@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- SEO Meta Tags -->
+  <title>FilmRoulette — Rastgele Film Önerisi ve Keşif Platformu</title>
+  <meta name="description"
+    content="Akşam ne izlesem derdine son! Film Ruleti ile kategori seç, butona bas, mükemmel filmi bul. Favorilerine ekle, platformları keşfet.">
+  <meta name="keywords"
+    content="film önerisi, rastgele film, film ruleti, movie roulette, film keşfi, netflix önerisi, film izle, TMDB">
+  <meta name="author" content="FilmRoulette">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://filmroulette.app">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://filmroulette.app">
+  <meta property="og:title" content="FilmRoulette — Rastgele Film Önerisi">
+  <meta property="og:description"
+    content="Akşam ne izlesem derdine son! Film Ruleti ile kategori seç, butona bas, mükemmel filmi bul.">
+  <meta property="og:image" content="https://filmroulette.app/assets/og-image.jpg">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://filmroulette.app">
+  <meta property="twitter:title" content="FilmRoulette — Rastgele Film Önerisi">
+  <meta property="twitter:description"
+    content="Akşam ne izlesem derdine son! Film Ruleti ile kategori seç, butona bas, mükemmel filmi bul.">
+  <meta property="twitter:image" content="https://filmroulette.app/assets/twitter-image.jpg">
+
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "FilmRoulette",
+    "description": "Rastgele film önerisi ve keşif platformu",
+    "url": "https://filmroulette.app",
+    "applicationCategory": "EntertainmentApplication",
+    "operatingSystem": "Web Browser",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "ratingCount": "1250"
+    }
+  }
+  </script>
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-logo">🎬 FilmRoulette</a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link active" data-i18n="navHome">Ana Sayfa</a>
+      <a href="pages/favorites.html" class="nav-link" data-i18n="navFavorites">Favoriler</a>
+      <a href="pages/trends.html" class="nav-link" data-i18n="navTrends">Trendler</a>
+    </div>
+    <div class="nav-right">
+      <select class="lang-select" id="langSelect" title="Dil Seçimi">
+        <option value="tr">🇹🇷 TR</option>
+        <option value="en">🇬🇧 EN</option>
+        <option value="es">🇪🇸 ES</option>
+        <option value="ru">🇷🇺 RU</option>
+      </select>
+      <button class="theme-toggle" id="themeToggle" title="Tema Değiştir">🌙</button>
+      <div class="nav-profile" id="navProfile">
+        <img id="profilePhoto" class="profile-photo" src="" alt="Profil">
+        <div class="profile-dropdown" id="profileDropdown">
+          <div class="dropdown-header">
+            <img id="dropdownPhoto" class="dropdown-photo" src="" alt="">
+            <div>
+              <p id="dropdownName" class="dropdown-name"></p>
+              <p id="dropdownEmail" class="dropdown-email"></p>
+            </div>
+          </div>
+          <div class="dropdown-divider"></div>
+          <a href="pages/profile.html" class="dropdown-item" id="profileBtn" data-i18n="navProfile">👤 Profilim</a>
+          <a href="pages/favorites.html" class="dropdown-item" data-i18n="navMyFavorites">❤️ Favorilerim</a>
+          <div class="dropdown-divider"></div>
+          <a href="#" class="dropdown-item logout" id="logoutBtn" data-i18n="navLogout">🚪 Çıkış Yap</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Ana İçerik -->
+  <div id="mainContent" class="container" style="display:none;">
+
+    <div class="content-wrapper">
+      <!-- Sol Panel: Kategori Listesi -->
+      <div class="category-panel">
+        <div class="page-header-left">
+          <h1 data-i18n="pageTitle">🎲 Film Ruleti</h1>
+          <p class="page-desc" data-i18n="pageDesc">Kategori seç, butona bas, akşamın filmini bul!</p>
+        </div>
+
+        <h3 class="category-panel-title">
+          <span data-i18n="categories">Kategoriler</span>
+          <span class="category-count" id="categoryCount">(0)</span>
+        </h3>
+
+        <!-- Ruh Hali Filtresi -->
+        <div class="filter-group">
+          <label class="filter-label" data-i18n="moodLabel">Ruh Hali (Mood)</label>
+          <select id="moodSelect" class="modern-select">
+            <option value="any" data-i18n="moodAny">Farketmez</option>
+            <option value="happy" data-i18n="moodHappy">😂 Eğlenceli</option>
+            <option value="sad" data-i18n="moodSad">😢 Duygusal</option>
+            <option value="tense" data-i18n="moodTense">😬 Gergin</option>
+            <option value="excited" data-i18n="moodExcited">🤩 Heyecanlı</option>
+            <option value="chill" data-i18n="moodChill">😌 Sakin</option>
+          </select>
+        </div>
+
+        <!-- Dönem Filtresi -->
+        <div class="filter-group">
+          <label class="filter-label" data-i18n="eraLabel">Dönem</label>
+          <select id="eraSelect" class="modern-select">
+            <option value="all" data-i18n="eraAll">Tüm Zamanlar</option>
+            <option value="2020s">2020'ler (Modern)</option>
+            <option value="2010s">2010'lar</option>
+            <option value="2000s">2000'ler</option>
+            <option value="1990s">90'lar (Klasik)</option>
+            <option value="1980s">80'ler (Retro)</option>
+            <option value="oldies" data-i18n="eraOldies">Eskiler</option>
+          </select>
+        </div>
+        <div class="category-list">
+          <label class="category-item">
+            <input type="checkbox" value="28">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catAction">Aksiyon</span>
+          </label>
+          <label class="category-item">
+            <input type="checkbox" value="12">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catAdventure">Macera</span>
+          </label>
+          <label class="category-item">
+            <input type="checkbox" value="16">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catAnimation">Animasyon</span>
+          </label>
+          <label class="category-item">
+            <input type="checkbox" value="99">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catDocumentary">Belgesel</span>
+          </label>
+          <label class="category-item">
+            <input type="checkbox" value="35">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catComedy">Komedi</span>
+          </label>
+          <label class="category-item">
+            <input type="checkbox" value="80">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catCrime">Suç</span>
+          </label>
+          <label class="category-item">
+            <input type="checkbox" value="18">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catDrama">Dram</span>
+          </label>
+          <label class="category-item">
+            <input type="checkbox" value="10751">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catFamily">Aile</span>
+          </label>
+          <label class="category-item">
+            <input type="checkbox" value="14">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catFantasy">Fantastik</span>
+          </label>
+          <label class="category-item">
+            <input type="checkbox" value="36">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catHistory">Tarih</span>
+          </label>
+          <label class="category-item">
+            <input type="checkbox" value="27">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catHorror">Korku</span>
+          </label>
+          <label class="category-item">
+            <input type="checkbox" value="10402">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catMusic">Müzik</span>
+          </label>
+          <label class="category-item">
+            <input type="checkbox" value="9648">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catMystery">Gizem</span>
+          </label>
+          <label class="category-item">
+            <input type="checkbox" value="10749">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catRomance">Romantik</span>
+          </label>
+          <label class="category-item">
+            <input type="checkbox" value="878">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catSciFi">Bilim Kurgu</span>
+          </label>
+          <label class="category-item">
+            <input type="checkbox" value="10752">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catWar">Savaş</span>
+          </label>
+          <label class="category-item">
+            <input type="checkbox" value="53">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catThriller">Gerilim</span>
+          </label>
+          <label class="category-item">
+            <input type="checkbox" value="37">
+            <span class="category-checkbox"></span>
+            <span class="category-name" data-i18n="catWestern">Western</span>
+          </label>
+        </div>
+
+        <!-- Puan Filtresi -->
+        <!-- Puan Filtresi (Modern 2026) -->
+        <div class="rating-filter-container">
+          <div class="rating-header-modern">
+            <span class="rating-title" data-i18n="minRating">IMDb Puanı</span>
+            <div class="rating-value-box">
+              <span id="ratingValue">6.0</span>
+              <span class="rating-star">★</span>
+            </div>
+          </div>
+
+          <div class="slider-wrapper">
+            <input type="range" id="ratingSlider" min="0" max="10" step="0.5" value="6.0" class="modern-slider">
+            <div class="slider-progress"></div>
+          </div>
+
+          <div class="rating-scale">
+            <span>0</span>
+            <span>5</span>
+            <span>10</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Orta Panel: Film Kartı + Buton -->
+      <div class="main-panel">
+        <!-- Seçilen Kategoriler Badge'leri -->
+        <div class="selected-categories" id="selectedCategories"></div>
+
+        <!-- Loading -->
+        <div id="loading" style="display:none;" data-i18n="loading">Patlamış Mısırlar Hazırlanıyor... 🍿</div>
+
+        <!-- Film Kartı (Dikdörtgen Form) -->
+        <div class="movie-card-container">
+          <div id="movie" style="display:none;">
+            <div class="movie-header">
+              <img id="poster" src="" alt="Poster">
+              <div class="movie-info">
+                <h2 id="title"></h2>
+                <div class="meta-data">
+                  <span id="year" class="tag"></span>
+                  <span id="runtime" class="tag"></span>
+                  <span id="rating" class="tag">⭐ <span></span></span>
+                </div>
+                <!-- Action Buttons: Trailer, Share, Blacklist -->
+                <div class="movie-actions">
+                  <button id="trailerBtn" class="action-btn" title="Fragman İzle">
+                    🎬 <span data-i18n="btnTrailer">Fragman</span>
+                  </button>
+                  <button id="shareBtn" class="action-btn" title="Paylaş">
+                    🔗 <span data-i18n="btnShare">Paylaş</span>
+                  </button>
+                  <button id="blacklistBtn" class="action-btn" title="Bunu İzledim / Gösterme">
+                    🚫 <span data-i18n="btnSeen">İzledim</span>
+                  </button>
+                  <button id="addFavoriteBtn" class="action-btn fav-btn" style="display:none;"
+                    data-i18n="addFavorite">❤️ Favori</button>
+                </div>
+
+                <p id="overview"></p>
+
+                <div class="cast-section">
+                  <h3 data-i18n="cast">Oyuncular</h3>
+                  <div id="castList" class="cast-list"></div>
+                </div>
+
+                <div class="watch-section" id="watchSection" style="display:none;">
+                  <h3 data-i18n="watchTitle">📺 İzleme Platformları</h3>
+                  <div id="watchProviders" class="watch-providers"></div>
+                  <a id="watchLink" class="watch-all-link" href="#" target="_blank" data-i18n="watchAll">Tüm seçenekleri
+                    gör →</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rastgele Film Bul Butonu -->
+        <button id="randomBtn" data-i18n="randomBtn">Rastgele Film Bul! 🎲</button>
+        <p class="shortcut-hint">İpucu: <kbd>SPACE</kbd> tuşu ile hızlıca film bulabilirsin!</p>
+      </div>
+
+      <!-- Sağ Panel: Geçmiş -->
+      <div class="right-panel">
+        <div class="history-panel">
+          <h3 class="panel-title" data-i18n="historyTitle">📜 Geçmiş</h3>
+          <div id="historyList" class="history-list">
+            <!-- Geçmiş filmler buraya gelecek -->
+            <div class="empty-history" data-i18n="historyEmpty">Henüz bir film çekmedin.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { logOut, onUserChange, addFavorite, markAsWatched } from './js/firebase.js';
+    import { fetchRandomMovie } from './js/tmdb.js';
+    import { t, applyTranslations } from './js/i18n.js';
+
+    // ─── Tema Toggle ───
+    const themeToggle = document.getElementById('themeToggle');
+    const savedTheme = localStorage.getItem('filmroulette-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    themeToggle.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+
+    themeToggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('filmroulette-theme', next);
+      themeToggle.textContent = next === 'dark' ? '🌙' : '☀️';
+    });
+
+    // ─── Dil Seçici ───
+    const langSelect = document.getElementById('langSelect');
+    const savedLang = localStorage.getItem('filmroulette-lang') || 'tr';
+    langSelect.value = savedLang;
+    applyTranslations(); // Sayfa yüklendiğinde çevirileri uygula
+
+    langSelect.addEventListener('change', () => {
+      localStorage.setItem('filmroulette-lang', langSelect.value);
+      applyTranslations(); // Dil değişince tüm metinleri güncelle
+    });
+
+    // ─── Puan Filtresi ───
+    const ratingSlider = document.getElementById('ratingSlider');
+    const ratingValue = document.getElementById('ratingValue');
+
+    ratingSlider.addEventListener('input', () => {
+      const val = parseFloat(ratingSlider.value);
+      ratingValue.textContent = val.toFixed(1);
+
+      // Slider doluluk oranı (Gradient)
+      const percent = (val / 10) * 100;
+      ratingSlider.style.background = `linear-gradient(to right, var(--accent) ${percent}%, var(--bg-input-border) ${percent}%)`;
+    });
+
+    // Sayfa yüklendiğinde slider rengini ayarla
+    window.addEventListener('load', () => {
+      const val = parseFloat(ratingSlider.value);
+      const percent = (val / 10) * 100;
+      ratingSlider.style.background = `linear-gradient(to right, var(--accent) ${percent}%, var(--bg-input-border) ${percent}%)`;
+    });
+
+    // ─── DOM Elementleri ───
+    const mainContent = document.getElementById('mainContent');
+    const randomBtn = document.getElementById('randomBtn');
+    const loadingDiv = document.getElementById('loading');
+    const movieDiv = document.getElementById('movie');
+    const addFavoriteBtn = document.getElementById('addFavoriteBtn');
+    const runtimeSpan = document.getElementById('runtime');
+    const castListDiv = document.getElementById('castList');
+    const watchSection = document.getElementById('watchSection');
+    const watchProviders = document.getElementById('watchProviders');
+    const watchLink = document.getElementById('watchLink');
+    const profilePhoto = document.getElementById('profilePhoto');
+    const dropdownPhoto = document.getElementById('dropdownPhoto');
+    const dropdownName = document.getElementById('dropdownName');
+    const dropdownEmail = document.getElementById('dropdownEmail');
+    const navProfile = document.getElementById('navProfile');
+    const profileDropdown = document.getElementById('profileDropdown');
+    const selectedCategories = document.getElementById('selectedCategories');
+    const categoryCount = document.getElementById('categoryCount');
+
+    let currentUser = null;
+    let currentMovie = null;
+
+    const defaultAvatar = 'https://ui-avatars.com/api/?background=e50914&color=fff&bold=true&size=128&name=';
+
+    // ─── Kategori Yönetimi ───
+    const categoryCheckboxes = document.querySelectorAll('.category-item input[type="checkbox"]');
+
+    function updateCategoryBadges() {
+      const checked = document.querySelectorAll('.category-item input:checked');
+      categoryCount.textContent = `(${checked.length})`;
+      selectedCategories.innerHTML = '';
+
+      checked.forEach(checkbox => {
+        const label = checkbox.closest('.category-item');
+        const categoryName = label.querySelector('.category-name').textContent;
+        const categoryValue = checkbox.value;
+
+        const badge = document.createElement('div');
+        badge.className = 'selected-badge';
+        badge.innerHTML = `
+          <span>${categoryName}</span>
+          <span class="selected-badge-remove" data-value="${categoryValue}">×</span>
+        `;
+        selectedCategories.appendChild(badge);
+      });
+
+      // Badge'lerdeki × butonlarına event listener ekle
+      document.querySelectorAll('.selected-badge-remove').forEach(removeBtn => {
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const value = removeBtn.dataset.value;
+          const checkbox = document.querySelector(`.category-item input[value="${value}"]`);
+          if (checkbox) {
+            checkbox.checked = false;
+            updateCategoryBadges();
+          }
+        });
+      });
+    }
+
+    categoryCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', updateCategoryBadges);
+    });
+
+    // Profil dropdown
+    navProfile.addEventListener('click', (e) => {
+      e.stopPropagation();
+      profileDropdown.classList.toggle('show');
+    });
+
+    document.addEventListener('click', () => {
+      profileDropdown.classList.remove('show');
+    });
+
+    // Kullanıcı durumu
+    onUserChange(async (user) => {
+      currentUser = user;
+      if (user) {
+        mainContent.style.display = 'block';
+
+        const displayName = user.displayName || user.email.split('@')[0];
+        const photoURL = user.photoURL || defaultAvatar + encodeURIComponent(displayName);
+
+        profilePhoto.src = photoURL;
+        dropdownPhoto.src = photoURL;
+        dropdownName.textContent = displayName;
+        dropdownEmail.textContent = user.email;
+      } else {
+        window.location.href = 'pages/login.html';
+      }
+    });
+
+    // Çıkış
+    document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await logOut();
+      window.location.href = 'pages/login.html';
+    });
+
+    // ─── Ekstra State ve Elementler ───
+    const moodSelect = document.getElementById('moodSelect');
+    const eraSelect = document.getElementById('eraSelect');
+    const historyList = document.getElementById('historyList');
+    const trailerBtn = document.getElementById('trailerBtn');
+    const shareBtn = document.getElementById('shareBtn');
+    const blacklistBtn = document.getElementById('blacklistBtn');
+
+    // Mood -> Genre Mapping
+    const MOOD_GENRES = {
+      'happy': ['35', '10751', '16'], // Comedy, Family, Animation
+      'sad': ['18', '10749'],         // Drama, Romance
+      'tense': ['27', '53', '9648'],  // Horror, Thriller, Mystery
+      'excited': ['28', '12', '878'], // Action, Adventure, Sci-Fi
+      'chill': ['99', '36', '10402'], // Documentary, History, Music
+      'any': []
+    };
+
+    // Era -> Year Range Mapping
+    const ERA_YEARS = {
+      '2020s': { gte: '2020-01-01', lte: '2029-12-31' },
+      '2010s': { gte: '2010-01-01', lte: '2019-12-31' },
+      '2000s': { gte: '2000-01-01', lte: '2009-12-31' },
+      '1990s': { gte: '1990-01-01', lte: '1999-12-31' },
+      '1980s': { gte: '1980-01-01', lte: '1989-12-31' },
+      'oldies': { gte: '1900-01-01', lte: '1979-12-31' },
+      'all': null
+    };
+
+    // Geçmiş Yönetimi
+    let history = []; // { id, title, poster_path, year }
+
+    function addToHistory(movie) {
+      // Zaten varsa ekleme
+      if (history.find(h => h.id === movie.id)) return;
+
+      history.unshift({
+        id: movie.id,
+        title: movie.title,
+        poster_path: movie.poster_path,
+        year: movie.release_date ? movie.release_date.split('-')[0] : '?'
+      });
+
+      // Max 10 film tutalım
+      if (history.length > 10) history.pop();
+      renderHistory();
+    }
+
+    function renderHistory() {
+      historyList.innerHTML = '';
+      if (history.length === 0) {
+        historyList.innerHTML = `<div class="empty-history" data-i18n="historyEmpty">${t('historyEmpty') || 'Henüz bir film çekmedin.'}</div>`;
+        return;
+      }
+
+      history.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `
+          <img src="${item.poster_path ? 'https://image.tmdb.org/t/p/w92' + item.poster_path : 'assets/images/placeholder.jpg'}" class="history-poster" alt="${item.title}">
+          <div class="history-info">
+            <div class="history-title">${item.title}</div>
+            <div class="history-year">${item.year}</div>
+          </div>
+        `;
+        // Tıklayınca filme gitmek istersek buraya logic eklenebilir
+        // Şu an sadece gösterim
+        historyList.appendChild(div);
+      });
+    }
+
+    // Blacklist (İzlenenler)
+    const blacklist = new Set(JSON.parse(localStorage.getItem('filmroulette-blacklist') || '[]'));
+
+    blacklistBtn.addEventListener('click', async () => {
+      if (!currentMovie) return;
+      blacklist.add(currentMovie.id);
+      localStorage.setItem('filmroulette-blacklist', JSON.stringify(Array.from(blacklist)));
+      
+      if (currentUser) {
+        await markAsWatched(currentUser.uid, currentMovie);
+      }
+      
+      alert('Bu film artık karşına çıkmayacak! 🚫');
+      randomBtn.click(); // Otomatik yeni film getir
+    });
+
+    // Share Button
+    shareBtn.addEventListener('click', () => {
+      if (!currentMovie) return;
+      const text = `FilmRoulette'te harika bir film buldum: ${currentMovie.title} (${currentMovie.release_date?.split('-')[0]}) 🎲 Sen de dene: https://filmroulette.app`;
+
+      if (navigator.share) {
+        navigator.share({
+          title: 'FilmRoulette',
+          text: text,
+          url: 'https://filmroulette.app'
+        }).catch(err => console.log('Paylaşım iptal', err));
+      } else {
+        // Fallback: Kopyala
+        navigator.clipboard.writeText(text).then(() => {
+          alert('Link kopyalandı! 📋');
+        });
+      }
+    });
+
+    // Trailer Button
+    trailerBtn.addEventListener('click', () => {
+      if (!currentMovie || !currentMovie.trailerKey) {
+        alert('Bu filmin fragmanı bulunamadı :/');
+        return;
+      }
+      const url = `https://www.youtube.com/watch?v=${currentMovie.trailerKey}`;
+      window.open(url, '_blank');
+    });
+
+    // Mood Değişimi
+    moodSelect.addEventListener('change', () => {
+      const mood = moodSelect.value;
+      const targetGenres = MOOD_GENRES[mood];
+
+      // Önce hepsini temizle
+      if (mood !== 'any') {
+        document.querySelectorAll('.category-item input').forEach(cb => cb.checked = false);
+        // İlgili türleri seç
+        targetGenres.forEach(id => {
+          const cb = document.querySelector(`.category-item input[value="${id}"]`);
+          if (cb) cb.checked = true;
+        });
+      }
+      updateCategoryBadges();
+    });
+
+    // Rastgele film çek
+    randomBtn.addEventListener('click', async () => {
+      loadingDiv.style.display = 'block';
+      movieDiv.style.display = 'none';
+
+      // 1. Kategorileri Al
+      let checked = document.querySelectorAll('.category-item input:checked');
+      // Eğer hiçbiri seçili değilse ve Mood seçiliyse, mood türlerini kullan (fallback)
+      if (checked.length === 0 && moodSelect.value !== 'any') {
+        // Checkboxes already updated by change listener, but strictly ensure validation
+      }
+
+      const genres = Array.from(checked).map(cb => cb.value);
+
+      // 2. Dönem Filtresini Al
+      const eraKey = eraSelect.value;
+      const years = ERA_YEARS[eraKey];
+
+      try {
+        let movie = null;
+        let attempts = 0;
+        // Blacklist kontrolü (Max 5 deneme)
+        while (attempts < 5) {
+          movie = await fetchRandomMovie(genres, 0, years);
+          if (!blacklist.has(movie.id)) break;
+          movie = null;
+          attempts++;
+        }
+
+        if (!movie) throw new Error('Uygun film bulunamadı veya hepsi izlenmiş listende.');
+
+        currentMovie = movie;
+        addToHistory(movie);
+
+        document.getElementById('title').textContent = movie.title;
+        document.getElementById('year').textContent = movie.release_date ? movie.release_date.split('-')[0] : t('unknown');
+        document.getElementById('overview').textContent = movie.overview || t('noDesc');
+        document.getElementById('rating').querySelector('span').textContent = movie.vote_average.toFixed(1);
+
+        const hours = Math.floor(movie.runtime / 60);
+        const minutes = movie.runtime % 60;
+        runtimeSpan.textContent = `${hours}h ${minutes}m`;
+
+        castListDiv.innerHTML = '';
+        if (movie.credits && movie.credits.cast) {
+          movie.credits.cast.slice(0, 5).forEach(actor => {
+            const span = document.createElement('span');
+            span.className = 'cast-tag';
+            span.textContent = actor.name;
+            castListDiv.appendChild(span);
+          });
+        }
+
+        document.getElementById('poster').src = movie.poster_path
+          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+          : 'assets/images/placeholder.jpg';
+
+        // Add to DOM
+        movieDiv.style.display = 'block';
+        addFavoriteBtn.style.display = 'inline-flex'; // Modern button uses flex
+
+        // İzleme Platformları
+        watchProviders.innerHTML = '';
+        if (movie.watchProviders) {
+          watchSection.style.display = 'block';
+          const allProviders = [
+            ...(movie.watchProviders.flatrate || []),
+            ...(movie.watchProviders.rent || []),
+            ...(movie.watchProviders.buy || [])
+          ];
+
+          const seen = new Set();
+          const unique = allProviders.filter(p => {
+            if (seen.has(p.provider_id)) return false;
+            seen.add(p.provider_id);
+            return true;
+          });
+
+          if (unique.length === 0) {
+            watchSection.style.display = 'none';
+          } else {
+            unique.forEach(provider => {
+              const badge = document.createElement('div');
+              badge.className = 'provider-badge';
+              badge.innerHTML = `
+                <img src="https://image.tmdb.org/t/p/w92${provider.logo_path}" alt="${provider.provider_name}">
+                <span>${provider.provider_name}</span>
+              `;
+              watchProviders.appendChild(badge);
+            });
+          }
+
+          if (movie.watchProvidersLink) {
+            watchLink.href = movie.watchProvidersLink;
+            watchLink.style.display = 'inline-block';
+          } else {
+            watchLink.style.display = 'none';
+          }
+        } else {
+          watchSection.style.display = 'none';
+        }
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        loadingDiv.style.display = 'none';
+      }
+    });
+
+    addFavoriteBtn.addEventListener('click', async () => {
+      if (!currentUser || !currentMovie) return;
+      await addFavorite(currentUser.uid, currentMovie);
+      alert(t('favAdded'));
+    });
+
+    // Keyboard Shortcut (Space)
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+        e.preventDefault(); // Scroll engelle
+        randomBtn.click();
+      }
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO -->
+    <title>Favori Filmlerim — FilmRoulette</title>
+    <meta name="description" content="Favori filmlerinizi görüntüleyin, filtreleyin ve detayları keşfedin.">
+    <meta name="robots" content="noindex, nofollow">
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="../index.html" class="nav-logo">🎬 FilmRoulette</a>
+        <div class="nav-links">
+            <a href="../index.html" class="nav-link" data-i18n="navHome">Ana Sayfa</a>
+            <a href="favorites.html" class="nav-link active" data-i18n="navFavorites">Favoriler</a>
+            <a href="trends.html" class="nav-link" data-i18n="navTrends">Trendler</a>
+        </div>
+        <div class="nav-right">
+            <select class="lang-select" id="langSelect" title="Dil Seçimi">
+                <option value="tr">🇹🇷 TR</option>
+                <option value="en">🇬🇧 EN</option>
+                <option value="es">🇪🇸 ES</option>
+                <option value="ru">🇷🇺 RU</option>
+            </select>
+            <button class="theme-toggle" id="themeToggle" title="Tema Değiştir">🌙</button>
+            <div class="nav-profile" id="navProfile">
+                <img id="profilePhoto" class="profile-photo" src="" alt="Profil">
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="dropdown-header">
+                        <img id="dropdownPhoto" class="dropdown-photo" src="" alt="">
+                        <div>
+                            <p id="dropdownName" class="dropdown-name"></p>
+                            <p id="dropdownEmail" class="dropdown-email"></p>
+                        </div>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a href="profile.html" class="dropdown-item" id="profileBtn" data-i18n="navProfile">👤 Profilim</a>
+                    <a href="favorites.html" class="dropdown-item" data-i18n="navMyFavorites">❤️ Favorilerim</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item logout" id="logoutBtn" data-i18n="navLogout">🚪 Çıkış Yap</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- İçerik -->
+    <div id="mainContent" class="container" style="display:none;">
+        <div class="page-header">
+            <h1 data-i18n="favTitle">❤️ Favori Filmlerim</h1>
+            <p class="page-desc" data-i18n="favDesc">Beğendiğin filmlerin burada listeleniyor.</p>
+        </div>
+
+        <!-- Filtreler -->
+        <div class="fav-filters">
+            <select id="sortFilter" class="filter-select">
+                <option value="date-desc">En Yeni Eklenen</option>
+                <option value="date-asc">En Eski Eklenen</option>
+                <option value="title-asc">A-Z</option>
+                <option value="title-desc">Z-A</option>
+                <option value="rating-desc">En Yüksek Puan</option>
+            </select>
+            <select id="genreFilter" class="filter-select">
+                <option value="all">Tüm Türler</option>
+            </select>
+        </div>
+
+        <div id="favoritesContainer"></div>
+    </div>
+
+    <!-- Film Detay Modal -->
+    <div id="movieModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" id="modalClose">&times;</span>
+            <div class="modal-body">
+                <div class="modal-header">
+                    <img id="modalPoster" src="" alt="Poster">
+                    <div class="modal-info">
+                        <h2 id="modalTitle"></h2>
+                        <div class="modal-meta">
+                            <span id="modalYear" class="tag"></span>
+                            <span id="modalRuntime" class="tag"></span>
+                            <span id="modalRating" class="tag">⭐ <span></span></span>
+                        </div>
+                        <p id="modalOverview"></p>
+                        <div class="modal-genres" id="modalGenres"></div>
+                    </div>
+                </div>
+
+                <div class="modal-section">
+                    <h3>Oyuncular</h3>
+                    <div id="modalCast" class="cast-list"></div>
+                </div>
+
+                <div class="modal-section" id="modalWatchSection" style="display:none;">
+                    <h3>📺 İzleme Platformları</h3>
+                    <div id="modalWatchProviders" class="watch-providers"></div>
+                </div>
+
+                <button id="modalRemoveFav" class="btn-remove">🗑️ Favorilerden Kaldır</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { logOut, onUserChange, getFavorites } from '../js/firebase.js';
+        import { getFirestore, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+        import { db } from '../js/firebase.js';
+        import { t, applyTranslations } from '../js/i18n.js';
+
+        const TMDB_API_KEY = '4e3a069664d69bf8ca8a2fbc1ba52568';
+        const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+
+        // ─── Tema Toggle ───
+        const themeToggle = document.getElementById('themeToggle');
+        const savedTheme = localStorage.getItem('filmroulette-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        themeToggle.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+
+        themeToggle.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('filmroulette-theme', next);
+            themeToggle.textContent = next === 'dark' ? '🌙' : '☀️';
+        });
+
+        // ─── Dil Seçici ───
+        const langSelect = document.getElementById('langSelect');
+        const savedLang = localStorage.getItem('filmroulette-lang') || 'tr';
+        langSelect.value = savedLang;
+        applyTranslations();
+
+        langSelect.addEventListener('change', () => {
+            localStorage.setItem('filmroulette-lang', langSelect.value);
+            applyTranslations();
+            if (currentUser) loadFavorites(currentUser.uid);
+        });
+
+        // ─── DOM ───
+        const mainContent = document.getElementById('mainContent');
+        const favoritesContainer = document.getElementById('favoritesContainer');
+        const profilePhoto = document.getElementById('profilePhoto');
+        const dropdownPhoto = document.getElementById('dropdownPhoto');
+        const dropdownName = document.getElementById('dropdownName');
+        const dropdownEmail = document.getElementById('dropdownEmail');
+        const navProfile = document.getElementById('navProfile');
+        const profileDropdown = document.getElementById('profileDropdown');
+        const sortFilter = document.getElementById('sortFilter');
+        const genreFilter = document.getElementById('genreFilter');
+        const movieModal = document.getElementById('movieModal');
+        const modalClose = document.getElementById('modalClose');
+
+        const defaultAvatar = 'https://ui-avatars.com/api/?background=e50914&color=fff&bold=true&size=128&name=';
+
+        let currentUser = null;
+        let allFavorites = [];
+        let currentMovie = null;
+
+        // Profil dropdown
+        navProfile.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('show');
+        });
+        document.addEventListener('click', () => {
+            profileDropdown.classList.remove('show');
+        });
+
+        // Modal
+        modalClose.addEventListener('click', () => {
+            movieModal.style.display = 'none';
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === movieModal) movieModal.style.display = 'none';
+        });
+
+        // Kullanıcı durumu
+        onUserChange(async (user) => {
+            currentUser = user;
+            if (user) {
+                mainContent.style.display = 'block';
+                const displayName = user.displayName || user.email.split('@')[0];
+                const photoURL = user.photoURL || defaultAvatar + encodeURIComponent(displayName);
+                profilePhoto.src = photoURL;
+                dropdownPhoto.src = photoURL;
+                dropdownName.textContent = displayName;
+                dropdownEmail.textContent = user.email;
+                await loadFavorites(user.uid);
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Çıkış
+        document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await logOut();
+            window.location.href = 'login.html';
+        });
+
+        // Favorileri yükle
+        async function loadFavorites(uid) {
+            try {
+                favoritesContainer.innerHTML = `<p style="color:var(--text-muted); text-align:center;">${t('favLoading')}</p>`;
+                const favs = await getFavorites(uid);
+                allFavorites = favs;
+
+                if (favs.length === 0) {
+                    favoritesContainer.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">🍿</div>
+                <h2>${t('favEmpty')}</h2>
+                <p>${t('favEmptyDesc')}</p>
+                <p style="margin-top: 15px;"><a href="../index.html">${t('favGoRoulette')}</a></p>
+            </div>
+            `;
+                    return;
+                }
+
+                // Türleri çıkar (filtreleme için)
+                const allGenres = new Set();
+                favs.forEach(movie => {
+                    if (movie.genres) {
+                        movie.genres.forEach(g => allGenres.add(JSON.stringify({ id: g.id, name: g.name })));
+                    }
+                });
+
+                genreFilter.innerHTML = '<option value="all">Tüm Türler</option>';
+                Array.from(allGenres).map(JSON.parse).forEach(genre => {
+                    const option = document.createElement('option');
+                    option.value = genre.id;
+                    option.textContent = genre.name;
+                    genreFilter.appendChild(option);
+                });
+
+                renderFavorites();
+            } catch (error) {
+                console.error("Favoriler yüklenirken hata oluştu:", error);
+                favoritesContainer.innerHTML = `<p style="color:red; text-align:center;">Favoriler yüklenirken bir hata oluştu: ${error.message}</p>`;
+            }
+        }
+
+        // Filtreleri uygula ve render et
+        function renderFavorites() {
+            let filtered = [...allFavorites];
+
+            // Tür filtresi
+            const selectedGenre = genreFilter.value;
+            if (selectedGenre !== 'all') {
+                filtered = filtered.filter(movie => {
+                    return movie.genres && movie.genres.some(g => g.id == selectedGenre);
+                });
+            }
+
+            // Sıralama
+            const sortType = sortFilter.value;
+            switch (sortType) {
+                case 'date-desc':
+                    filtered.sort((a, b) => {
+                        const aSec = a.addedAt?.seconds || (a.addedAt && typeof a.addedAt.getTime === 'function' ? a.addedAt.getTime()/1000 : 0);
+                        const bSec = b.addedAt?.seconds || (b.addedAt && typeof b.addedAt.getTime === 'function' ? b.addedAt.getTime()/1000 : 0);
+                        return bSec - aSec;
+                    });
+                    break;
+                case 'date-asc':
+                    filtered.sort((a, b) => {
+                        const aSec = a.addedAt?.seconds || (a.addedAt && typeof a.addedAt.getTime === 'function' ? a.addedAt.getTime()/1000 : 0);
+                        const bSec = b.addedAt?.seconds || (b.addedAt && typeof b.addedAt.getTime === 'function' ? b.addedAt.getTime()/1000 : 0);
+                        return aSec - bSec;
+                    });
+                    break;
+                case 'title-asc':
+                    filtered.sort((a, b) => a.title.localeCompare(b.title));
+                    break;
+                case 'title-desc':
+                    filtered.sort((a, b) => b.title.localeCompare(a.title));
+                    break;
+                case 'rating-desc':
+                    filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+                    break;
+            }
+
+            favoritesContainer.innerHTML = '';
+            const grid = document.createElement('div');
+            grid.className = 'favorites-grid';
+
+            filtered.forEach(movie => {
+                const card = document.createElement('div');
+                card.className = 'fav-card';
+                card.innerHTML = `
+          <img src="${movie.poster || 'https://via.placeholder.com/300x450?text=No+Poster'}" alt="${movie.title}">
+          <div class="fav-card-info">
+            <p class="fav-card-title">${movie.title}</p>
+            <p class="fav-card-rating">⭐ ${movie.rating?.toFixed(1) || 'N/A'}</p>
+          </div>
+        `;
+
+                card.addEventListener('click', () => openMovieModal(movie));
+                grid.appendChild(card);
+            });
+
+            favoritesContainer.appendChild(grid);
+        }
+
+        // Film detay modal aç
+        async function openMovieModal(movie) {
+            currentMovie = movie;
+            movieModal.style.display = 'flex';
+
+            // TMDB'den güncel detayları çek
+            try {
+                const lang = localStorage.getItem('filmroulette-lang') || 'tr';
+                const langMap = { 'tr': 'tr-TR', 'en': 'en-US', 'es': 'es-ES', 'ru': 'ru-RU' };
+                const response = await fetch(
+                    `${TMDB_BASE_URL}/movie/${movie.tmdbId}?api_key=${TMDB_API_KEY}&language=${langMap[lang] || 'tr-TR'}&append_to_response=credits,watch/providers`
+                );
+                const details = await response.json();
+
+                document.getElementById('modalTitle').textContent = details.title;
+                document.getElementById('modalYear').textContent = details.release_date ? details.release_date.split('-')[0] : 'N/A';
+                document.getElementById('modalRuntime').textContent = details.runtime ? `${Math.floor(details.runtime / 60)}h ${details.runtime % 60}m` : 'N/A';
+                document.getElementById('modalRating').querySelector('span').textContent = details.vote_average.toFixed(1);
+                document.getElementById('modalOverview').textContent = details.overview || t('noDesc');
+                document.getElementById('modalPoster').src = details.poster_path ? `https://image.tmdb.org/t/p/w500${details.poster_path}` : 'https://via.placeholder.com/300x450';
+
+                // Türler
+                const genresDiv = document.getElementById('modalGenres');
+                genresDiv.innerHTML = '';
+                if (details.genres) {
+                    details.genres.forEach(genre => {
+                        const badge = document.createElement('span');
+                        badge.className = 'genre-badge';
+                        badge.textContent = genre.name;
+                        genresDiv.appendChild(badge);
+                    });
+                }
+
+                // Oyuncular
+                const castDiv = document.getElementById('modalCast');
+                castDiv.innerHTML = '';
+                if (details.credits && details.credits.cast) {
+                    details.credits.cast.slice(0, 8).forEach(actor => {
+                        const span = document.createElement('span');
+                        span.className = 'cast-tag';
+                        span.textContent = actor.name;
+                        castDiv.appendChild(span);
+                    });
+                }
+
+                // İzleme platformları
+                const watchSection = document.getElementById('modalWatchSection');
+                const watchProviders = document.getElementById('modalWatchProviders');
+                watchProviders.innerHTML = '';
+
+                if (details['watch/providers'] && details['watch/providers'].results) {
+                    const countryMap = { 'tr': 'TR', 'en': 'US', 'es': 'ES', 'ru': 'RU' };
+                    const country = countryMap[lang] || 'TR';
+                    const providers = details['watch/providers'].results[country];
+
+                    if (providers && (providers.flatrate || providers.rent || providers.buy)) {
+                        watchSection.style.display = 'block';
+                        const allProviders = [
+                            ...(providers.flatrate || []),
+                            ...(providers.rent || []),
+                            ...(providers.buy || [])
+                        ];
+
+                        const seen = new Set();
+                        allProviders.forEach(provider => {
+                            if (!seen.has(provider.provider_id)) {
+                                seen.add(provider.provider_id);
+                                const badge = document.createElement('div');
+                                badge.className = 'provider-badge';
+                                badge.innerHTML = `
+                  <img src="https://image.tmdb.org/t/p/w92${provider.logo_path}" alt="${provider.provider_name}">
+                  <span>${provider.provider_name}</span>
+                `;
+                                watchProviders.appendChild(badge);
+                            }
+                        });
+                    } else {
+                        watchSection.style.display = 'none';
+                    }
+                } else {
+                    watchSection.style.display = 'none';
+                }
+
+            } catch (err) {
+                console.error('TMDB fetch error:', err);
+            }
+        }
+
+        // Favorilerden kaldır (modal içinden)
+        document.getElementById('modalRemoveFav').addEventListener('click', async () => {
+            if (!currentUser || !currentMovie) return;
+            if (confirm(t('favConfirm'))) {
+                await deleteDoc(doc(db, "users", currentUser.uid, "favorites", currentMovie.id));
+                movieModal.style.display = 'none';
+                await loadFavorites(currentUser.uid);
+            }
+        });
+
+        // Filtreleme eventleri
+        sortFilter.addEventListener('change', renderFavorites);
+        genreFilter.addEventListener('change', renderFavorites);
+    </script>
+</body>
+
+</html>
