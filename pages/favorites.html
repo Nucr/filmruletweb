@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- SEO -->
-    <title>Favori Filmlerim — FilmRoulette</title>
+    <title data-i18n="favTitleTag">Favori Filmlerim — FilmRoulette</title>
     <meta name="description" content="Favori filmlerinizi görüntüleyin, filtreleyin ve detayları keşfedin.">
     <meta name="robots" content="noindex, nofollow">
 
@@ -64,14 +64,14 @@
         <!-- Filtreler -->
         <div class="fav-filters">
             <select id="sortFilter" class="filter-select">
-                <option value="date-desc">En Yeni Eklenen</option>
-                <option value="date-asc">En Eski Eklenen</option>
-                <option value="title-asc">A-Z</option>
-                <option value="title-desc">Z-A</option>
-                <option value="rating-desc">En Yüksek Puan</option>
+                <option value="date-desc" data-i18n="favSortNewest">En Yeni Eklenen</option>
+                <option value="date-asc" data-i18n="favSortOldest">En Eski Eklenen</option>
+                <option value="title-asc" data-i18n="favSortAZ">A-Z</option>
+                <option value="title-desc" data-i18n="favSortZA">Z-A</option>
+                <option value="rating-desc" data-i18n="favSortRating">En Yüksek Puan</option>
             </select>
             <select id="genreFilter" class="filter-select">
-                <option value="all">Tüm Türler</option>
+                <option value="all" data-i18n="favAllGenres">Tüm Türler</option>
             </select>
         </div>
 
@@ -98,16 +98,16 @@
                 </div>
 
                 <div class="modal-section">
-                    <h3>Oyuncular</h3>
+                    <h3 data-i18n="favActors">Oyuncular</h3>
                     <div id="modalCast" class="cast-list"></div>
                 </div>
 
                 <div class="modal-section" id="modalWatchSection" style="display:none;">
-                    <h3>📺 İzleme Platformları</h3>
+                    <h3 data-i18n="watchTitle">📺 İzleme Platformları</h3>
                     <div id="modalWatchProviders" class="watch-providers"></div>
                 </div>
 
-                <button id="modalRemoveFav" class="btn-remove">🗑️ Favorilerden Kaldır</button>
+                <button id="modalRemoveFav" class="btn-remove" data-i18n="favRemove">🗑️ Favorilerden Kaldır</button>
             </div>
         </div>
     </div>
@@ -140,10 +140,12 @@
         const savedLang = localStorage.getItem('filmroulette-lang') || 'tr';
         langSelect.value = savedLang;
         applyTranslations();
+        document.title = t('favTitleTag') || 'Favori Filmlerim — FilmRoulette';
 
         langSelect.addEventListener('change', () => {
             localStorage.setItem('filmroulette-lang', langSelect.value);
             applyTranslations();
+            document.title = t('favTitleTag') || 'Favori Filmlerim — FilmRoulette';
             if (currentUser) loadFavorites(currentUser.uid);
         });
 
@@ -235,7 +237,7 @@
                     }
                 });
 
-                genreFilter.innerHTML = '<option value="all">Tüm Türler</option>';
+                genreFilter.innerHTML = `<option value="all">${t('favAllGenres') || 'Tüm Türler'}</option>`;
                 Array.from(allGenres).map(JSON.parse).forEach(genre => {
                     const option = document.createElement('option');
                     option.value = genre.id;
@@ -246,7 +248,7 @@
                 renderFavorites();
             } catch (error) {
                 console.error("Favoriler yüklenirken hata oluştu:", error);
-                favoritesContainer.innerHTML = `<p style="color:red; text-align:center;">Favoriler yüklenirken bir hata oluştu: ${error.message}</p>`;
+                favoritesContainer.innerHTML = `<p style="color:red; text-align:center;">${t('favLoadError') || 'Favoriler yüklenirken bir hata oluştu'}: ${error.message}</p>`;
             }
         }
 

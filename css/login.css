@@ -207,6 +207,7 @@ body {
 
 /* ─── Ana Buton ─── */
 .btn-primary {
+    width: 100%;
     padding: 14px;
     font-size: 15px;
     font-weight: 700;
@@ -238,6 +239,10 @@ body {
     display: none;
     text-align: center;
     line-height: 1.4;
+}
+
+.auth-message:empty {
+    display: none !important;
 }
 
 .auth-message.error {

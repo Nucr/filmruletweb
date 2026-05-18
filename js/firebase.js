@@ -10,7 +10,8 @@ import {
   GoogleAuthProvider,
   GithubAuthProvider,
   TwitterAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
@@ -43,6 +44,11 @@ export async function signUp(email, password) {
 export async function signIn(email, password) {
   const userCredential = await signInWithEmailAndPassword(auth, email, password);
   return userCredential.user;
+}
+
+// ─── Şifre Sıfırlama (Forgot Password) ───
+export async function resetPassword(email) {
+  await sendPasswordResetEmail(auth, email);
 }
 
 // ─── Sosyal Giriş (Google, Facebook, GitHub, Twitter) ───

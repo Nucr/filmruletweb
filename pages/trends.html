@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- SEO -->
-    <title>Trendler — FilmRoulette</title>
+    <title data-i18n="trendsTitleTag">Trendler — FilmRoulette</title>
     <meta name="description" content="Haftanın en popüler ve trend olan filmlerini keşfedin.">
 
     <link rel="stylesheet" href="../css/style.css">
@@ -56,13 +56,13 @@
     <!-- İçerik -->
     <div id="mainContent" class="container" style="display:none;">
         <div class="page-header">
-            <h1>🔥 Haftanın Trendleri</h1>
-            <p class="page-desc">Tüm dünyada bu hafta en çok konuşulan ve izlenen popüler filmler.</p>
+            <h1 data-i18n="trendsTitle">🔥 Haftanın Trendleri</h1>
+            <p class="page-desc" data-i18n="trendsDesc">Tüm dünyada bu hafta en çok konuşulan ve izlenen popüler filmler.</p>
         </div>
 
         <div id="trendsContainer">
             <!-- Filmler buraya yüklenecek -->
-            <p style="color:var(--text-muted); text-align:center;">Filmler yükleniyor...</p>
+            <p style="color:var(--text-muted); text-align:center;" data-i18n="trendsLoading">Filmler yükleniyor...</p>
         </div>
     </div>
 
@@ -86,12 +86,12 @@
                 </div>
 
                 <div class="modal-section">
-                    <h3>Oyuncular</h3>
+                    <h3 data-i18n="favActors">Oyuncular</h3>
                     <div id="modalCast" class="cast-list"></div>
                 </div>
 
                 <div class="modal-section" id="modalWatchSection" style="display:none;">
-                    <h3>📺 İzleme Platformları</h3>
+                    <h3 data-i18n="watchTitle">📺 İzleme Platformları</h3>
                     <div id="modalWatchProviders" class="watch-providers"></div>
                 </div>
             </div>
@@ -124,10 +124,12 @@
         const savedLang = localStorage.getItem('filmroulette-lang') || 'tr';
         langSelect.value = savedLang;
         applyTranslations();
+        document.title = t('trendsTitleTag') || 'Trendler — FilmRoulette';
 
         langSelect.addEventListener('change', () => {
             localStorage.setItem('filmroulette-lang', langSelect.value);
             applyTranslations();
+            document.title = t('trendsTitleTag') || 'Trendler — FilmRoulette';
             loadTrends(); // Dili değiştirince yeniden yükle
         });
 
@@ -190,7 +192,7 @@
 
         // Trendleri Yükle
         async function loadTrends() {
-            trendsContainer.innerHTML = `<p style="color:var(--text-muted); text-align:center;">Yükleniyor...</p>`;
+            trendsContainer.innerHTML = `<p style="color:var(--text-muted); text-align:center;">${t('trendsLoading') || 'Yükleniyor...'}</p>`;
             try {
                 const lang = localStorage.getItem('filmroulette-lang') || 'tr';
                 const langMap = { 'tr': 'tr-TR', 'en': 'en-US', 'es': 'es-ES', 'ru': 'ru-RU' };
@@ -202,11 +204,11 @@
                 if (data.results && data.results.length > 0) {
                     renderTrends(data.results);
                 } else {
-                    trendsContainer.innerHTML = `<p style="text-align:center;">Şu an için trend film bulunamadı.</p>`;
+                    trendsContainer.innerHTML = `<p style="text-align:center;">${t('trendsNotFound') || 'Şu an için trend film bulunamadı.'}</p>`;
                 }
             } catch (err) {
                 console.error("Trend filmleri çekerken hata:", err);
-                trendsContainer.innerHTML = `<p style="color:red; text-align:center;">Filmler yüklenirken hata oluştu.</p>`;
+                trendsContainer.innerHTML = `<p style="color:red; text-align:center;">${t('trendsLoadError') || 'Filmler yüklenirken hata oluştu.'}</p>`;
             }
         }
 

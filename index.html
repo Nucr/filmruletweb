@@ -132,11 +132,11 @@
           <label class="filter-label" data-i18n="eraLabel">Dönem</label>
           <select id="eraSelect" class="modern-select">
             <option value="all" data-i18n="eraAll">Tüm Zamanlar</option>
-            <option value="2020s">2020'ler (Modern)</option>
-            <option value="2010s">2010'lar</option>
-            <option value="2000s">2000'ler</option>
-            <option value="1990s">90'lar (Klasik)</option>
-            <option value="1980s">80'ler (Retro)</option>
+            <option value="2020s" data-i18n="era2020s">2020'ler (Modern)</option>
+            <option value="2010s" data-i18n="era2010s">2010'lar</option>
+            <option value="2000s" data-i18n="era2000s">2000'ler</option>
+            <option value="1990s" data-i18n="era1990s">90'lar (Klasik)</option>
+            <option value="1980s" data-i18n="era1980s">80'ler (Retro)</option>
             <option value="oldies" data-i18n="eraOldies">Eskiler</option>
           </select>
         </div>
@@ -312,7 +312,11 @@
 
         <!-- Rastgele Film Bul Butonu -->
         <button id="randomBtn" data-i18n="randomBtn">Rastgele Film Bul! 🎲</button>
-        <p class="shortcut-hint">İpucu: <kbd>SPACE</kbd> tuşu ile hızlıca film bulabilirsin!</p>
+        <p class="shortcut-hint">
+          <span data-i18n="shortcutHintPrefix">İpucu: </span>
+          <kbd>SPACE</kbd>
+          <span data-i18n="shortcutHintSuffix"> tuşu ile hızlıca film bulabilirsin!</span>
+        </p>
       </div>
 
       <!-- Sağ Panel: Geçmiş -->
@@ -467,6 +471,9 @@
         dropdownPhoto.src = photoURL;
         dropdownName.textContent = displayName;
         dropdownEmail.textContent = user.email;
+
+        // Kullanıcıya özel geçmiş ve blacklist yükle
+        loadUserHistoryAndBlacklist(user.uid);
       } else {
         window.location.href = 'pages/login.html';
       }
@@ -508,10 +515,18 @@
       'all': null
     };
 
-    // Geçmiş Yönetimi
+    // Geçmiş ve Blacklist Yönetimi
     let history = []; // { id, title, poster_path, year }
+    let blacklist = new Set();
+
+    function loadUserHistoryAndBlacklist(uid) {
+      history = JSON.parse(localStorage.getItem(`filmroulette-history-${uid}`) || '[]');
+      blacklist = new Set(JSON.parse(localStorage.getItem(`filmroulette-blacklist-${uid}`) || '[]'));
+      renderHistory();
+    }
 
     function addToHistory(movie) {
+      if (!currentUser) return;
       // Zaten varsa ekleme
       if (history.find(h => h.id === movie.id)) return;
 
@@ -524,6 +539,7 @@
 
       // Max 10 film tutalım
       if (history.length > 10) history.pop();
+      localStorage.setItem(`filmroulette-history-${currentUser.uid}`, JSON.stringify(history));
       renderHistory();
     }
 
@@ -544,25 +560,18 @@
             <div class="history-year">${item.year}</div>
           </div>
         `;
-        // Tıklayınca filme gitmek istersek buraya logic eklenebilir
-        // Şu an sadece gösterim
         historyList.appendChild(div);
       });
     }
 
-    // Blacklist (İzlenenler)
-    const blacklist = new Set(JSON.parse(localStorage.getItem('filmroulette-blacklist') || '[]'));
-
     blacklistBtn.addEventListener('click', async () => {
-      if (!currentMovie) return;
+      if (!currentMovie || !currentUser) return;
       blacklist.add(currentMovie.id);
-      localStorage.setItem('filmroulette-blacklist', JSON.stringify(Array.from(blacklist)));
+      localStorage.setItem(`filmroulette-blacklist-${currentUser.uid}`, JSON.stringify(Array.from(blacklist)));
       
-      if (currentUser) {
-        await markAsWatched(currentUser.uid, currentMovie);
-      }
+      await markAsWatched(currentUser.uid, currentMovie);
       
-      alert('Bu film artık karşına çıkmayacak! 🚫');
+      alert(t('blacklistSuccess') || 'Bu film artık karşına çıkmayacak! 🚫');
       randomBtn.click(); // Otomatik yeni film getir
     });
 
@@ -580,7 +589,7 @@
       } else {
         // Fallback: Kopyala
         navigator.clipboard.writeText(text).then(() => {
-          alert('Link kopyalandı! 📋');
+          alert(t('linkCopied') || 'Link kopyalandı! 📋');
         });
       }
     });
@@ -588,7 +597,7 @@
     // Trailer Button
     trailerBtn.addEventListener('click', () => {
       if (!currentMovie || !currentMovie.trailerKey) {
-        alert('Bu filmin fragmanı bulunamadı :/');
+        alert(t('noTrailer') || 'Bu filmin fragmanı bulunamadı :/');
         return;
       }
       const url = `https://www.youtube.com/watch?v=${currentMovie.trailerKey}`;
