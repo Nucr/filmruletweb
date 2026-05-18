@@ -237,7 +237,7 @@
                     }
                 });
 
-                genreFilter.innerHTML = `<option value="all">${t('favAllGenres') || 'Tüm Türler'}</option>`;
+                genreFilter.innerHTML = `<option value="all">${t('allGenres')}</option>`;
                 Array.from(allGenres).map(JSON.parse).forEach(genre => {
                     const option = document.createElement('option');
                     option.value = genre.id;
