@@ -192,22 +192,22 @@
                 <p id="mainProfileEmail">email@adres.com</p>
 
                 <div class="stat-box">
-                    <span class="stat-label" data-i18n="profileTotalWatched">Toplam İzlenen Film</span>
+                    <span class="stat-label" data-i18n="statTotalMoviesLabel">Toplam İzlenen Film</span>
                     <span class="stat-value" id="statTotalMovies">0</span>
                 </div>
                 
                 <div class="stat-box">
-                    <span class="stat-label" data-i18n="profileTotalWatchTime">Toplam İzleme Süresi</span>
+                    <span class="stat-label" data-i18n="statTotalHoursLabel">Toplam İzleme Süresi</span>
                     <span class="stat-value" id="statTotalHours">0 Saat</span>
                 </div>
 
                 <div class="stat-box">
-                    <span class="stat-label" data-i18n="profileTopGenre">En Çok İzlenen Tür</span>
+                    <span class="stat-label" data-i18n="statTopGenreLabel">En Çok İzlenen Tür</span>
                     <span class="stat-value" id="statTopGenre">-</span>
                 </div>
 
                 <div class="stat-box">
-                    <span class="stat-label" data-i18n="profileLastWatched">Son İzlenen</span>
+                    <span class="stat-label" data-i18n="statLastWatchedLabel">Son İzlenen</span>
                     <span class="stat-value" id="statLastWatched" style="font-size:1rem;">-</span>
                 </div>
             </div>
@@ -215,11 +215,11 @@
             <!-- Sağ Panel: Ağaç Grafiği -->
             <div class="network-container">
                 <div class="network-header">
-                    <h3 data-i18n="profileMovieMap">🕸️ Benim Film Ağım (MovieMap)</h3>
-                    <button class="btn-primary" style="padding: 5px 15px; font-size: 0.9rem;" onclick="network.fit()" data-i18n="profileCenter">Ortala</button>
+                    <h3 data-i18n="movieMapHeading">🕸️ Benim Film Ağım (MovieMap)</h3>
+                    <button class="btn-primary" style="padding: 5px 15px; font-size: 0.9rem;" onclick="network.fit()" data-i18n="btnCenter">Ortala</button>
                 </div>
                 <div style="position: relative; flex:1;">
-                    <div id="loadingNetwork" class="loading-network" data-i18n="profileGeneratingNetwork">Ağ Yaratılıyor...</div>
+                    <div id="loadingNetwork" class="loading-network" data-i18n="loadingNetwork">Ağ Yaratılıyor...</div>
                     <div id="movieNetwork"></div>
                 </div>
             </div>
@@ -335,8 +335,8 @@
                     document.getElementById('movieNetwork').innerHTML = `
                         <div style="display:flex; height:100%; align-items:center; justify-content:center; color:var(--text-muted); flex-direction:column;">
                             <div style="font-size:3rem; margin-bottom:10px;">🕸️</div>
-                            <p>${t('profileNoNetwork') || 'Henüz ağını oluşturacak kadar film izlemedin.'}</p>
-                            <a href="../index.html" class="btn-primary" style="margin-top:15px; text-decoration:none;" data-i18n="profileGoFindMovies">${t('profileGoFindMovies') || 'Film Bulmaya Git'}</a>
+                            <p>${t('errNotEnoughWatched')}</p>
+                            <a href="../index.html" class="btn-primary" style="margin-top:15px; text-decoration:none;" data-i18n="btnGoFindMovies">${t('btnGoFindMovies')}</a>
                         </div>
                     `;
                     return;
@@ -357,7 +357,7 @@
 
             } catch (err) {
                 console.error("Profil verisi yüklenirken hata:", err);
-                document.getElementById('loadingNetwork').textContent = t('profileNetworkError') || "Ağ yüklenirken hata oluştu.";
+                document.getElementById('loadingNetwork').textContent = t('errLoadingNetwork');
             }
         }
 
@@ -377,8 +377,8 @@
                 }
             });
 
-            const hLabel = t('hourAbbr') || 's';
-            const mLabel = t('minAbbr') || 'd';
+            const hLabel = t('unitHourShort');
+            const mLabel = t('unitMinuteShort');
             document.getElementById('statTotalHours').textContent = `${Math.floor(totalMinutes / 60)}${hLabel} ${totalMinutes % 60}${mLabel}`;
 
             if (Object.keys(genreCounts).length > 0) {

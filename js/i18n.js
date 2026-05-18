@@ -52,6 +52,7 @@ const translations = {
         catWestern: 'Western',
 
         // Favoriler Sayfası
+        favTitleTag: 'Favori Filmlerim — FilmRoulette',
         favTitle: '❤️ Favori Filmlerim',
         favDesc: 'Beğendiğin filmlerin burada listeleniyor.',
         favEmpty: 'Henüz favori filmin yok',
@@ -167,6 +168,7 @@ const translations = {
         btnRemoveFav: '🗑️ Favorilerden Kaldır',
 
         // Trends Page
+        trendsTitleTag: 'Trendler — FilmRoulette',
         trendsTitle: '🔥 Haftanın Trendleri',
         trendsDesc: 'Tüm dünyada bu hafta en çok konuşulan ve izlenen popüler filmler.',
         loadingTrends: 'Filmler yükleniyor...',
@@ -219,6 +221,7 @@ const translations = {
         catWar: 'War',
         catWestern: 'Western',
 
+        favTitleTag: 'My Favorite Movies — FilmRoulette',
         favTitle: '❤️ My Favorite Movies',
         favDesc: 'Your liked movies are listed here.',
         favEmpty: "You don't have any favorites yet",
@@ -333,6 +336,7 @@ const translations = {
         btnRemoveFav: '🗑️ Remove from Favorites',
 
         // Trends Page
+        trendsTitleTag: 'Trends — FilmRoulette',
         trendsTitle: '🔥 Weekly Trends',
         trendsDesc: 'The most talked about and watched popular movies around the world this week.',
         loadingTrends: 'Loading movies...',
@@ -385,6 +389,7 @@ const translations = {
         catWar: 'Guerra',
         catWestern: 'Western',
 
+        favTitleTag: 'Mis Películas Favoritas — FilmRoulette',
         favTitle: '❤️ Mis Películas Favoritas',
         favDesc: 'Tus películas favoritas se muestran aquí.',
         favEmpty: 'Aún no tienes favoritos',
@@ -499,6 +504,7 @@ const translations = {
         btnRemoveFav: '🗑️ Eliminar de Favoritos',
 
         // Trends Page
+        trendsTitleTag: 'Tendencias — FilmRoulette',
         trendsTitle: '🔥 Tendencias Semanales',
         trendsDesc: 'Las películas populares más comentadas y vistas en todo el mundo esta semana.',
         loadingTrends: 'Cargando películas...',
@@ -551,6 +557,7 @@ const translations = {
         catWar: 'Военный',
         catWestern: 'Вестерн',
 
+        favTitleTag: 'Мои Избранные Фильмы — FilmRoulette',
         favTitle: '❤️ Мои Избранные Фильмы',
         favDesc: 'Здесь отображаются ваши любимые фильмы.',
         favEmpty: 'У вас ещё нет избранных фильмов',
@@ -665,6 +672,7 @@ const translations = {
         btnRemoveFav: '🗑️ Удалить из Избранного',
 
         // Trends Page
+        trendsTitleTag: 'Тренды — FilmRoulette',
         trendsTitle: '🔥 Тренды Недели',
         trendsDesc: 'Самые обсуждаемые и популярные фильмы в мире на этой неделе.',
         loadingTrends: 'Загрузка фильмов...',
