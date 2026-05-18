@@ -1292,6 +1292,59 @@ h3 {
   box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.15);
 }
 
+/* Otomatik Tamamlama Önerileri (Autocomplete Suggestions) */
+.autocomplete-container {
+  position: relative;
+  width: 100%;
+}
+
+.suggestions-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--bg-card-border);
+  border-radius: 12px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  padding-left: 18px; /* Micro-interaction: hafifçe sağa kayma efekti */
+}
+
+.suggestion-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--bg-input-border);
+  border: 1.5px solid var(--bg-card-border);
+}
+
 /* ═══════════════════════════════════════════ */
 /*            MOVIE ACTIONS                    */
 /* ═══════════════════════════════════════════ */

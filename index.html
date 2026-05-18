@@ -154,7 +154,10 @@
         <!-- Oyuncu Filtresi -->
         <div class="filter-group">
           <label class="filter-label" data-i18n="actorLabel">Oyuncu (Aktör)</label>
-          <input type="text" id="actorInput" placeholder="Cillian Murphy" class="modern-input">
+          <div class="autocomplete-container">
+            <input type="text" id="actorInput" placeholder="Cillian Murphy" class="modern-input" autocomplete="off">
+            <div id="actorSuggestions" class="suggestions-dropdown" style="display: none;"></div>
+          </div>
         </div>
 
         <!-- Orijinal Dil Filtresi -->
@@ -368,7 +371,7 @@
 
   <script type="module">
     import { logOut, onUserChange, addFavorite, markAsWatched } from './js/firebase.js';
-    import { fetchRandomMovie, fetchActorId } from './js/tmdb.js';
+    import { fetchRandomMovie, fetchActorId, fetchActorSuggestions } from './js/tmdb.js';
     import { t, applyTranslations } from './js/i18n.js';
 
     // ─── Tema Toggle ───
@@ -664,6 +667,74 @@
       }
     });
 
+    // Oyuncu Otomatik Tamamlama (Autocomplete) Entegrasyonu
+    const actorInput = document.getElementById('actorInput');
+    const actorSuggestions = document.getElementById('actorSuggestions');
+    let autocompleteDebounceTimer;
+
+    actorInput.addEventListener('input', () => {
+      clearTimeout(autocompleteDebounceTimer);
+      const query = actorInput.value.trim();
+
+      // Değer silindiyse verileri temizle
+      if (query.length < 2) {
+        actorSuggestions.innerHTML = '';
+        actorSuggestions.style.display = 'none';
+        delete actorInput.dataset.actorId;
+        delete actorInput.dataset.actorName;
+        return;
+      }
+
+      autocompleteDebounceTimer = setTimeout(async () => {
+        try {
+          const results = await fetchActorSuggestions(query);
+          if (results.length === 0) {
+            actorSuggestions.innerHTML = '';
+            actorSuggestions.style.display = 'none';
+            return;
+          }
+
+          actorSuggestions.innerHTML = '';
+          actorSuggestions.style.display = 'block';
+
+          results.slice(0, 5).forEach(person => {
+            const div = document.createElement('div');
+            div.className = 'suggestion-item';
+
+            // Profil resmi veya harf simgesi (fallback)
+            const avatarUrl = person.profile_path
+              ? `https://image.tmdb.org/t/p/w92${person.profile_path}`
+              : `https://ui-avatars.com/api/?background=e50914&color=fff&bold=true&size=48&name=${encodeURIComponent(person.name)}`;
+
+            div.innerHTML = `
+              <img src="${avatarUrl}" class="suggestion-avatar" alt="${person.name}">
+              <span>${person.name}</span>
+            `;
+
+            div.addEventListener('click', () => {
+              actorInput.value = person.name;
+              actorInput.dataset.actorId = person.id;
+              actorInput.dataset.actorName = person.name;
+              actorSuggestions.innerHTML = '';
+              actorSuggestions.style.display = 'none';
+            });
+
+            actorSuggestions.appendChild(div);
+          });
+        } catch (err) {
+          console.error('Autocomplete error:', err);
+        }
+      }, 300);
+    });
+
+    // Sayfa içinde herhangi bir yere tıklandığında öneri dropdown'ını kapat
+    document.addEventListener('click', (e) => {
+      if (!actorInput.contains(e.target) && !actorSuggestions.contains(e.target)) {
+        actorSuggestions.innerHTML = '';
+        actorSuggestions.style.display = 'none';
+      }
+    });
+
     // Rastgele film çek
     randomBtn.addEventListener('click', async () => {
       loadingDiv.style.display = 'block';
@@ -685,15 +756,20 @@
       }
 
       // 3. Oyuncu Filtresini Al
-      const actorName = document.getElementById('actorInput').value.trim();
+      const actorName = actorInput.value.trim();
       let actorId = null;
       if (actorName) {
         try {
-          actorId = await fetchActorId(actorName);
-          if (!actorId) {
-            alert(t('errActorNotFound') || 'Bu isimde bir oyuncu bulunamadı! 🎭');
-            loadingDiv.style.display = 'none';
-            return;
+          // Otomatik tamamlamadan seçildiyse ve isim değiştirilmediyse TMDB araması yapmadan direkt kullan
+          if (actorInput.dataset.actorId && actorInput.dataset.actorName === actorName) {
+            actorId = actorInput.dataset.actorId;
+          } else {
+            actorId = await fetchActorId(actorName);
+            if (!actorId) {
+              alert(t('errActorNotFound') || 'Bu isimde bir oyuncu bulunamadı! 🎭');
+              loadingDiv.style.display = 'none';
+              return;
+            }
           }
         } catch (err) {
           console.error(err);

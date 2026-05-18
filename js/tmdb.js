@@ -47,6 +47,21 @@ export async function fetchActorId(actorName) {
   }
 }
 
+export async function fetchActorSuggestions(query) {
+  if (!query || query.trim().length < 2) return [];
+  const language = getLanguage();
+  const searchUrl = `${TMDB_BASE_URL}/search/person?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query.trim())}&language=${language}`;
+  try {
+    const response = await fetch(searchUrl);
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.results || [];
+  } catch (err) {
+    console.error('Actor suggestions search error:', err);
+    return [];
+  }
+}
+
 function buildDiscoverParams(genres, minRating, years, actorId, originalLanguage) {
   let query = `&sort_by=popularity.desc&include_adult=false&vote_count.gte=100&vote_average.gte=${minRating}`;
   if (genres && genres.length > 0) {
